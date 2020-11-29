@@ -6,6 +6,7 @@ class Model():
         self._position = position if position else glm.vec3(0.0, 0.0, 0.0)
         self._scale = scale if scale else glm.vec3(1.0, 1.0, 1.0)
         self._rotation = rotation if rotation else glm.mat4()
+        self._matrix = glm.mat4()
 
     def translate(self, trans_vector):
         self._position += trans_vector
@@ -24,3 +25,9 @@ class Model():
     
     def get_position(self):
         return self._position
+
+    def get_matrix(self):
+        return self._matrix
+    
+    def set_matrix(self, mat):
+        self._matrix = mat

@@ -12,6 +12,11 @@ class Triangle(Geometry):
             0,  0.5, 0
         ]
         self._indicies = [0, 1, 2]
+        self._normals = [
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0
+        ]
         self._type = "triangle"
         self._name = name
         self.material = material if material else Material()

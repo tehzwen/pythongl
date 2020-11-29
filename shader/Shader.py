@@ -45,7 +45,7 @@ class Shader:
             info_log_len = gl.glGetShaderiv(shader_id, gl.GL_INFO_LOG_LENGTH)
             if info_log_len:
                 logmsg = gl.glGetShaderInfoLog(shader_id)
-                log.error(logmsg)
+                print("ERROR: ", logmsg)
                 sys.exit(10)
 
             gl.glAttachShader(self.program_id, shader_id)
@@ -67,3 +67,12 @@ class Shader:
 
     def link_mat4(self, name, matrix):
         gl.glUniformMatrix4fv(gl.glGetUniformLocation(self.program_id, name), 1, False, matrix)
+
+    def link_vec3(self, name, vec, count):
+        gl.glUniform3fv(gl.glGetUniformLocation(self.program_id, name), count, vec)
+
+    def link_float(self, name, val):
+        gl.glUniform1f(gl.glGetUniformLocation(self.program_id, name), val)
+
+    def link_int(self, name, val):
+        gl.glUniform1i(gl.glGetUniformLocation(self.program_id, name), val)
