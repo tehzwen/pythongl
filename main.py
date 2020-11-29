@@ -1,4 +1,5 @@
 import contextlib
+from material.Material import Material
 import sys
 from OpenGL import GL as gl
 import time
@@ -9,12 +10,13 @@ import math
 from geometry.Triangle import *
 from shader.Shader import *
 from camera.Camera import *
+from scene.Manager import *
 
 
-def main_loop(window, objects):
+def main_loop(window, manager):
 
     # create projection matrix
-    proj_matrix = glm.perspective(60 * math.pi / 180, 720/640, 0.1, 1000)
+    proj_matrix = glm.perspective(glm.radians(60), 720/640, 0.1, 1000)
     camera = Camera(position=glm.vec3(0.0, 0.0, -2.5),
                     center=glm.vec3(0.0, 0.0, 0.0))
 
@@ -26,7 +28,7 @@ def main_loop(window, objects):
 
         view_matrix = glm.lookAt(camera.position, camera.center, camera.up)
 
-        for object in objects:
+        for key, object in manager.get_objects().items():
             object.bind()
             object.link_material()
             object.link_model()
@@ -69,12 +71,13 @@ def create_main_window():
 
 
 if __name__ == '__main__':
+    my_manager = Manager()
+
     window = create_main_window()
-    my_triangle = Triangle()
+    my_triangle = Triangle("testTriangle")
     my_triangle.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_triangle.shader.load_vert_source(file_name="basicShader.vert.glsl")
     my_triangle.shader.init()
     my_triangle.setup()
-    my_objects = []
-    my_objects.append(my_triangle)
-    main_loop(window, my_objects)
+    my_manager.add_object(my_triangle)
+    main_loop(window, my_manager)

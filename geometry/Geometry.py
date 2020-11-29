@@ -9,11 +9,15 @@ class Geometry:
     def __init__(self, material=None, model=None):
         self._vertices = []
         self._indicies = []
+        self._name = ""
         self.vao = None
         self.shader = Shader()
         self._type = None
         self.material = material if material else Material()
         self.model = model if model else Model()
+
+    def get_name(self):
+        return self._name
 
     def get_type(self):
         return self._type
@@ -39,9 +43,9 @@ class Geometry:
 
     def link_model(self):
         model_matrix = glm.mat4()
-        model_matrix *= self.model.rotation
-        model_matrix = glm.translate(model_matrix, self.model.position)
-        model_matrix = glm.scale(model_matrix, self.model.scale)
+        model_matrix *= self.model.get_rotation()
+        model_matrix = glm.translate(model_matrix, self.model.get_position())
+        model_matrix = glm.scale(model_matrix, self.model.get_scale())
 
         gl.glUniformMatrix4fv(gl.glGetUniformLocation(
             self.shader.program_id, "modelMatrix"), 1, False, model_matrix.to_list())
