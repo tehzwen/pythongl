@@ -10,13 +10,26 @@ class Geometry:
         self._vertices = []
         self._indicies = []
         self._normals = []
+        self._texture_coords = []
         self._name = ""
+        self._parent = None
+        self._type = None
+        self._centroid = None
         self.vao = None
         self.shader = Shader()
-        self._type = None
         self.material = material if material else Material()
         self.model = model if model else Model()
-        self._centroid = None
+        self.vertex_attrib = None
+        self.normal_attrib = None
+        self.index_buffer = None
+        self.vertex_buffer = None
+        self.normal_buffer = None
+
+    def get_parent(self):
+        return self._parent
+
+    def set_parent(self, parent_name):
+        self._parent = parent_name
 
     def get_name(self):
         return self._name
@@ -29,6 +42,9 @@ class Geometry:
 
     def get_normals(self):
         return self._normals
+
+    def get_texture_coords(self):
+        return self._texture_coords
 
     def get_indices(self):
         return self._indicies
@@ -43,8 +59,21 @@ class Geometry:
         gl.glBindVertexArray(self.vao)
 
     def link_material(self):
-        gl.glUniform3fv(gl.glGetUniformLocation(
-            self.shader.program_id, "diffuseValue"), 1, self.material.diffuse.to_list())
+        self.shader.link_vec3("material.ambient",
+                              self.material.ambient.to_list(), 1)
+        self.shader.link_vec3("material.diffuse",
+                              self.material.diffuse.to_list(), 1)
+        self.shader.link_vec3("material.specular",
+                              self.material.specular.to_list(), 1)
+        self.shader.link_float("material.alpha", self.material.alpha)
+        self.shader.link_float("material.shininess", self.material.n)
+
+        if (self.material.diffuseTexture):
+            gl.glActiveTexture(gl.GL_TEXTURE0 + self.material.diffuseTexture)
+            self.shader.link_int("diffuseSamplerExists", 1)
+            self.shader.link_int(
+                "diffuseSampler", self.material.diffuseTexture)
+            gl.glBindTexture(gl.GL_TEXTURE_2D, self.material.diffuseTexture)
 
     def link_model(self):
         model_matrix = glm.mat4()
@@ -67,9 +96,9 @@ class Geometry:
         attr_id = 0  # No particular reason for 0,
         # but must match the layout location in the shader.
 
-        vertex_buffer = gl.glGenBuffers(1)
+        self.vertex_buffer = gl.glGenBuffers(1)
 
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vertex_buffer)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertex_buffer)
 
         array_type = (gl.GLfloat * len(self.get_vertices()))
         gl.glBufferData(gl.GL_ARRAY_BUFFER,
@@ -91,9 +120,9 @@ class Geometry:
     def create_normal_buffer(self):
         attr_id = 1
 
-        normal_buffer = gl.glGenBuffers(1)
+        self.normal_buffer = gl.glGenBuffers(1)
 
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, normal_buffer)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.normal_buffer)
 
         array_type = (gl.GLfloat * len(self.get_normals()))
         gl.glBufferData(gl.GL_ARRAY_BUFFER,
@@ -113,10 +142,33 @@ class Geometry:
 
         self.normal_attrib = attr_id
 
+    def create_texture_buffer(self):
+        attr_id = 2
+
+        self.texture_buffer = gl.glGenBuffers(1)
+        array_type = (gl.GLfloat * len(self.get_texture_coords()))
+        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+                        len(self.get_texture_coords()) *
+                        ctypes.sizeof(ctypes.c_float),
+                        array_type(*self.get_texture_coords()),
+                        gl.GL_STATIC_DRAW)
+
+        gl.glVertexAttribPointer(
+            attr_id,            # attribute 0.
+            2,                  # components per vertex attribute
+            gl.GL_FLOAT,        # type
+            False,              # to be normalized?
+            0,                  # stride
+            None                # array buffer offset
+        )
+
+        self.texture_attrib = attr_id
+
     def enable_vertex_attrib(self):
         gl.glEnableVertexAttribArray(
             self.vertex_attrib)  # use currently bound VAO
         gl.glEnableVertexAttribArray(self.normal_attrib)
+        gl.glEnableVertexAttribArray(self.texture_attrib)
 
     def create_index_buffer(self):
         index_buffer = gl.glGenBuffers(1)
@@ -142,11 +194,11 @@ class Geometry:
         self.calculate_centroid()
         self.create_vertex_buffer()
         self.create_normal_buffer()
+        self.create_texture_buffer()
         self.create_index_buffer()
 
     def bind(self):
-        self.shader.bind()
-        self.bind_index_buffer()
+        self.bind_vao()
         self.enable_vertex_attrib()
 
     def rotate(self, vector, angle):
@@ -160,7 +212,6 @@ class Geometry:
 
     def calculate_centroid(self):
         center = glm.vec3()
-
         for i in range(0, len(self._vertices), 3):
             center += glm.vec3(self._vertices[i],
                                self._vertices[i + 1], self._vertices[i + 2])

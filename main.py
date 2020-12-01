@@ -9,10 +9,12 @@ import glm
 import math
 from geometry.Triangle import *
 from geometry.Cube import *
+from geometry.Mesh import *
 from shader.Shader import *
 from camera.Camera import *
 from scene.Manager import *
 from lighting.Pointlight import *
+from renderer.Renderer import *
 
 
 # global manager
@@ -24,10 +26,11 @@ def main_loop(window):
 
     # create projection matrix
     proj_matrix = glm.perspective(glm.radians(60), 720/640, 0.1, 1000)
-    camera = Camera(position=glm.vec3(0.0, 0.0, -2.5),
+    camera = Camera(position=glm.vec3(0.0, 0.0, -25),
                     center=glm.vec3(0.0, 0.0, 0.0))
 
-    
+    renderer = Renderer()
+    renderer.set_projection_matrix(proj_matrix)
 
     while (
         glfw.get_key(window, glfw.KEY_ESCAPE) != glfw.PRESS and
@@ -36,41 +39,27 @@ def main_loop(window):
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
         view_matrix = glm.lookAt(camera.position, camera.center, camera.up)
+        renderer.set_view_matrix(view_matrix)
 
         # link objects
         for key, object in sm.get_objects().items():
-            object.bind()
-            object.link_material()
-            object.link_model()
-            object.shader.link_mat4("projectionMatrix", proj_matrix.to_list())
-            object.shader.link_mat4("viewMatrix", view_matrix.to_list())
-            normal_matrix = -object.model.get_matrix()
-            mormal_matrix = glm.transpose(normal_matrix)
-            object.shader.link_mat4("normalMatrix", normal_matrix.to_list())
-
-            # link lights
-            count = 0
-            for key, light in sorted(sm.get_point_lights().items()):
-                object.shader.link_vec3("pointLights[" + str(count) + "].position", light.get_position().to_list(), 1)
-                object.shader.link_vec3("pointLights[" + str(count) + "].color", light.get_color().to_list(), 1)
-                object.shader.link_float("pointLights[" + str(count) + "].strength", light.get_strength())
-                count += 1
-
-            object.shader.link_int("numPointLights", count)
-
-            gl.glDrawElements(gl.GL_TRIANGLES, len(
-                object.get_indices()), gl.GL_UNSIGNED_INT, None)
+            if (isinstance(object, Geometry)):
+                renderer.render_geometry(object, sm.get_point_lights())
+            else:
+                renderer.render_mesh(object, sm.get_point_lights())
         glfw.swap_buffers(window)
         glfw.poll_events()
 
 
 def key_handler(window, key, scan_code, action, mods):
-    tempCube = sm.get_object("testCube")
+    # tempCube = sm.get_object("testCube")
 
     if (key == glfw.KEY_A):
-        tempCube.rotate(glm.vec3(1.0, 0.0, 0.0), 1)
+        # tempCube.rotate(glm.vec3(1.0, 0.0, 0.0), 1)
+        print("LEFT")
     elif (key == glfw.KEY_D):
-        tempCube.rotate(glm.vec3(-1.0, 0.0, 0.0), 1)
+        print("RIGHT")
+        # tempCube.rotate(glm.vec3(-1.0, 0.0, 0.0), 1)
 
 
 def create_main_window():
@@ -102,11 +91,36 @@ if __name__ == '__main__':
     my_light.set_position(glm.vec3(1.0, 5.0, 0.0))
     sm.add_point_light(my_light)
 
+    earth = Mesh("earth")
+    earth.load_model(filename="earth.obj")
+    earth.scale(glm.vec3(0.5, 0.5, 0.5))
+    earth.translate(glm.vec3(0.0, -18, 0.0))
+    sm.add_object(earth)
+
     my_cube = Cube("testCube")
     my_cube.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_cube.shader.load_vert_source(file_name="basicShader.vert.glsl")
     my_cube.shader.init()
+    my_cube.material.diffuseTexture = my_cube.material.load_texture(filename="poggers.png")
+    my_cube.translate(glm.vec3(2.5, 0.0, 0.0))
+    my_cube.scale(glm.vec3(10, 10, 10))
     my_cube.setup()
-
     sm.add_object(my_cube)
+
+    # my_cube2 = Cube("testCubeTwo")
+    # my_cube2.shader.load_frag_source(file_name="basicShader.frag.glsl")
+    # my_cube2.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    # my_cube2.shader.init()
+    # my_cube2.translate(glm.vec3(-1.5, 0.0, 0.0))
+    # my_cube2.setup()
+    # sm.add_object(my_cube2)
+
+
+    # my_triangle = Triangle("testTriangle")
+    # my_triangle.shader.load_frag_source(file_name="basicShader.frag.glsl")
+    # my_triangle.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    # my_triangle.shader.init()
+    # my_triangle.setup()
+    # sm.add_object(my_triangle)
+
     main_loop(window)
