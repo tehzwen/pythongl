@@ -22,7 +22,6 @@ class Material():
             print('IOError: failed to open ' + filename)
             
         image = image.convert('RGBA')
-        print(image.mode)
 
         imageData = numpy.array(image.getdata(), numpy.uint8)
         textureID = gl.glGenTextures(1)

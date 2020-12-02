@@ -1,4 +1,3 @@
-import glm
 import pyassimp
 import itertools
 from geometry.Geometry import *
@@ -40,21 +39,23 @@ class Mesh():
 
     def load_model(self, filename=None):
         flatten = itertools.chain.from_iterable
-        # model_details = pyassimp.load("./res/models/" + filename)
-        with pyassimp.load("./res/models/" + filename) as model_details:
-            count = 0
-            for detail in model_details.meshes:
-                tempChild = MeshChild(self.get_name() + str(count), list(flatten(
-                    detail.vertices)), detail.normals, list(flatten(list(flatten(detail.texturecoords)))), list(flatten(detail.faces)), detail.material)
-                tempChild.shader.load_vert_source(
-                    self._shader_name + ".vert.glsl")
-                tempChild.shader.load_frag_source(
-                    self._shader_name + ".frag.glsl")
-                tempChild.shader.init()
-                tempChild.setup()
-                tempChild.model = self.model
-                self._children.append(tempChild)
-                count += 1
+        try:
+            with pyassimp.load("./res/models/" + filename) as model_details:
+                count = 0
+                for detail in model_details.meshes:
+                    tempChild = MeshChild(self.get_name() + str(count), list(flatten(
+                        detail.vertices)), detail.normals, list(flatten(list(flatten(detail.texturecoords)))), list(flatten(detail.faces)), detail.material)
+                    tempChild.shader.load_vert_source(
+                        self._shader_name + ".vert.glsl")
+                    tempChild.shader.load_frag_source(
+                        self._shader_name + ".frag.glsl")
+                    tempChild.shader.init()
+                    tempChild.setup()
+                    tempChild.model = self.model
+                    self._children.append(tempChild)
+                    count += 1
+        except Exception as e:
+            print(e)
 
 
 class MeshChild(Geometry):
@@ -66,4 +67,17 @@ class MeshChild(Geometry):
         self._texture_coords = texture_coords
         self._indicies = faces
         for prop in material.properties.items():
-            print(prop)
+            if (prop[0] == "ambient"):
+                self.material.ambient = glm.vec3(
+                    prop[1][0], prop[1][1], prop[1][2])
+            elif (prop[0] == "diffuse"):
+                self.material.diffuse = glm.vec3(
+                    prop[1][0], prop[1][1], prop[1][2])
+            elif (prop[0] == "specular"):
+                self.material.specular = glm.vec3(
+                    prop[1][0], prop[1][1], prop[1][2])
+            elif (prop[0] == "opacity"):
+                self.material.alpha = prop[1]
+            elif (prop[0] == "shininess"):
+                self.material.n = prop[1]
+
