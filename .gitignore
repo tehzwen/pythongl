@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+/res/models/*
+/res/materials/*
+
 # C extensions
 *.so
 

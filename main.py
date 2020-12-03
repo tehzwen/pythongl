@@ -10,6 +10,7 @@ import math
 from geometry.Triangle import *
 from geometry.Cube import *
 from geometry.Mesh import *
+from geometry.Quad import *
 from shader.Shader import *
 from camera.Camera import *
 from scene.Manager import *
@@ -26,20 +27,32 @@ def main_loop(window):
 
     # create projection matrix
     proj_matrix = glm.perspective(glm.radians(60), 720/640, 0.1, 1000)
-    camera = Camera(position=glm.vec3(0.0, 0.0, -25),
-                    center=glm.vec3(0.0, 0.0, 0.0))
 
     renderer = Renderer()
     renderer.set_projection_matrix(proj_matrix)
+
+    previous_time = 0.0
+    current_time = 0.0
 
     while (
         glfw.get_key(window, glfw.KEY_ESCAPE) != glfw.PRESS and
         not glfw.window_should_close(window)
     ):
+        current_time = glfw.get_time()
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-        view_matrix = glm.lookAt(camera.position, camera.center, camera.up)
+        camera = sm.get_active_camera()
+        view_matrix = glm.lookAt(
+            camera.get_position(), camera.get_center(), camera.get_up())
         renderer.set_view_matrix(view_matrix)
+
+        # xCam = math.sin(glfw.get_time() * 0.5) * 20
+        # zCam = math.cos(glfw.get_time() * 0.5) * 20
+
+        # camera.set_position(glm.vec3(xCam, camera.get_position()[1], zCam))
+        delta = current_time - previous_time
+        previous_time = current_time
+        sm.update(delta)
 
         # link objects
         for key, object in sm.get_objects().items():
@@ -52,14 +65,15 @@ def main_loop(window):
 
 
 def key_handler(window, key, scan_code, action, mods):
-    # tempCube = sm.get_object("testCube")
 
     if (key == glfw.KEY_A):
-        # tempCube.rotate(glm.vec3(1.0, 0.0, 0.0), 1)
+        tempCube.rotate(glm.vec3(1.0, 0.0, 0.0), 1)
         print("LEFT")
     elif (key == glfw.KEY_D):
         print("RIGHT")
-        # tempCube.rotate(glm.vec3(-1.0, 0.0, 0.0), 1)
+        tempCube.rotate(glm.vec3(-1.0, 0.0, 0.0), 1)
+    elif (key == glfw.KEY_Q):
+        sm.switch_cameras("secondCam", 0.005)
 
 
 def create_main_window():
@@ -88,39 +102,51 @@ if __name__ == '__main__':
 
     window = create_main_window()
     my_light = Pointlight("light1")
-    my_light.set_position(glm.vec3(1.0, 5.0, 0.0))
+    my_light.set_position(glm.vec3(1.0, 10.0, 0.0))
+    my_light.set_strength(100.0)
     sm.add_point_light(my_light)
 
     earth = Mesh("earth")
-    earth.load_model(filename="earth.obj")
+    earth.load_model(filename="Medieval-House.obj")
     earth.scale(glm.vec3(0.5, 0.5, 0.5))
-    earth.translate(glm.vec3(0.0, -18, 0.0))
+    earth.translate(glm.vec3(0.25, -3.0, 0.0))
+    earth.calc_model_matrix()
     sm.add_object(earth)
+
+    tree = Mesh("tree")
+    tree.load_model(filename="Lowpoly_tree_sample.obj")
+    tree.scale(glm.vec3(0.25, 0.25, 0.25))
+    tree.translate(glm.vec3(-4, -10, 0.0))
+    tree.calc_model_matrix()
+    sm.add_object(tree)
 
     my_cube = Cube("testCube")
     my_cube.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_cube.shader.load_vert_source(file_name="basicShader.vert.glsl")
     my_cube.shader.init()
-    my_cube.material.diffuseTexture = my_cube.material.load_texture(filename="poggers.png")
-    my_cube.translate(glm.vec3(2.5, 0.0, 0.0))
-    my_cube.scale(glm.vec3(10, 10, 10))
+    my_cube.set_diffuse_texture(filename="poggers.png")
+    my_cube.translate(glm.vec3(9, -1.0, 0.0))
+    my_cube.scale(glm.vec3(10, 3, 3))
     my_cube.setup()
     sm.add_object(my_cube)
 
-    # my_cube2 = Cube("testCubeTwo")
-    # my_cube2.shader.load_frag_source(file_name="basicShader.frag.glsl")
-    # my_cube2.shader.load_vert_source(file_name="basicShader.vert.glsl")
-    # my_cube2.shader.init()
-    # my_cube2.translate(glm.vec3(-1.5, 0.0, 0.0))
-    # my_cube2.setup()
-    # sm.add_object(my_cube2)
+    my_plane = Quad("testPlane", material=Material(ambient=glm.vec3(0.5, 0.5, 0.5)))
+    my_plane.shader.load_frag_source(file_name="basicShader.frag.glsl")
+    my_plane.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    my_plane.shader.init()
+    # my_plane.set_diffuse_texture(filename="poggers.png")
+    my_plane.translate(glm.vec3(0.0, -2.0, 0.0))
+    my_plane.scale(glm.vec3(100, 1, 100))
+    my_plane.setup()
+    sm.add_object(my_plane)
 
+    camera = Camera("mainCam", position=glm.vec3(10, 2.0, -15),
+                    center=earth.get_worldspace_centroid(), up=glm.vec3(0.0, 1.0, 0.0))
 
-    # my_triangle = Triangle("testTriangle")
-    # my_triangle.shader.load_frag_source(file_name="basicShader.frag.glsl")
-    # my_triangle.shader.load_vert_source(file_name="basicShader.vert.glsl")
-    # my_triangle.shader.init()
-    # my_triangle.setup()
-    # sm.add_object(my_triangle)
+    cameraTwo = Camera("secondCam", position=glm.vec3(3, 6.0, 15),
+                       center=my_cube.model.get_position(), up=glm.vec3(0.0, 1.0, 0.0))
+
+    sm.add_camera(camera)
+    sm.add_camera(cameraTwo)
 
     main_loop(window)

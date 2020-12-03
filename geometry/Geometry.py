@@ -58,6 +58,9 @@ class Geometry:
     def bind_vao(self):
         gl.glBindVertexArray(self.vao)
 
+    def set_diffuse_texture(self, filename):
+        self.material.set_diffuse_texture("./res/materials/" + filename)
+
     def link_material(self):
         self.shader.link_vec3("material.ambient",
                               self.material.ambient.to_list(), 1)
@@ -205,6 +208,7 @@ class Geometry:
         self.model.rotate(vector, angle)
 
     def scale(self, scale_vec):
+        # print(scale_vec)
         self.model.scale(scale_vec)
 
     def translate(self, trans_vec):
