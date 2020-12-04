@@ -10,6 +10,17 @@ class Manager():
         self._active_camera = None
         self.switch_camera = {"camera": None,
                               "center": False, "position": False, "speed": 0.0}
+        self.dimensions = {
+            "width": 0,
+            "height": 0
+        }
+
+    def set_dimensions(self, width, height):
+        self.dimensions["width"] = width
+        self.dimensions["height"] = height
+
+    def get_dimensions(self):
+        return (self.dimensions["width"], self.dimensions["height"])
 
     def add_object(self, object):
         if (object.get_name() not in self._objects):
