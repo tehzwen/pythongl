@@ -29,7 +29,7 @@ uniform int diffuseSamplerExists;
 uniform sampler2D diffuseSampler;
 
 vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 diffuseValue) {
-    vec3 ambient = material.ambient * light.color;
+    vec3 ambient = material.ambient * light.color * material.diffuse;
     vec3 lightDir = normalize(light.position - fragPos);
     float diff = max(dot(normal, lightDir), 0.0);
     float distance = length(light.position - fragPos);

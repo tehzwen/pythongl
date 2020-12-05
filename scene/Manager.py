@@ -14,12 +14,23 @@ class Manager():
         self.debug_window = None
         self.input = Input()
         self.delta_time = None
+        self.dimensions = {
+            "width": 0,
+            "height": 0
+        }
 
     def get_background_color(self):
         return self._background_color
 
     def set_background_color(self, bg):
         self._background_color = bg
+
+    def set_dimensions(self, width, height):
+        self.dimensions["width"] = width
+        self.dimensions["height"] = height
+
+    def get_dimensions(self):
+        return (self.dimensions["width"], self.dimensions["height"])
 
     def add_object(self, object):
         if (object.get_name() not in self._objects):
@@ -86,7 +97,7 @@ class Manager():
                 self.input.handle_right_click_press()
                 self.input.mouse_right_down = True
             elif (action == glfw.RELEASE):
-                self.input.mouse_right_down = False                
+                self.input.mouse_right_down = False
         if (button == glfw.MOUSE_BUTTON_LEFT):
             if (action == glfw.PRESS):
                 self.input.handle_left_click_press()
@@ -119,4 +130,3 @@ class Manager():
             # if (self.input.delta_y > 1.0 or self.input.delta_y < -1.0):
             #     cam.set_vert_spin(cam.get_vert_spin() + self.input.delta_y)
             #     cam.rotate_vertical()
-            
