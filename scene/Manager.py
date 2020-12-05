@@ -1,5 +1,7 @@
 import glm
 import math
+import glfw
+from scene.Input import *
 
 
 class Manager():
@@ -8,8 +10,16 @@ class Manager():
         self._point_lights = {}
         self._cameras = {}
         self._active_camera = None
-        self.switch_camera = {"camera": None,
-                              "center": False, "position": False, "speed": 0.0}
+        self._background_color = glm.vec4(0.0, 0.0, 0.0, 1.0)
+        self.debug_window = None
+        self.input = Input()
+        self.delta_time = None
+
+    def get_background_color(self):
+        return self._background_color
+
+    def set_background_color(self, bg):
+        self._background_color = bg
 
     def add_object(self, object):
         if (object.get_name() not in self._objects):
@@ -17,10 +27,6 @@ class Manager():
         else:
             raise Exception(
                 "Object with this name already exists in the scene, names must be unique")
-
-    def switch_cameras(self, name, speed):
-        self.switch_camera["camera"] = name
-        self.switch_camera["speed"] = speed
 
     def get_objects(self):
         return self._objects
@@ -64,119 +70,53 @@ class Manager():
         if (name in self._cameras):
             self._active_camera = name
 
-    def lerp_camera_center(self, delta_time):
-        cam = self.get_active_camera()
-        secondCam = self.get_camera(self.switch_camera["camera"])
-        speed = self.switch_camera["speed"]
-
-        camPosition = cam.get_center()
-        secondPosition = secondCam.get_center()
-
-        camQuat = glm.quat(
-            camPosition[0], camPosition[1], camPosition[2], 1.0)
-        secondQuat = glm.quat(
-            secondPosition[0], secondPosition[1], secondPosition[2], 1.0)
-        step = glm.lerp(camQuat, secondQuat, 1.0 - delta_time)
-        step *= speed
-
-        change = glm.vec3(camPosition[0], camPosition[1], camPosition[2])
-
-        # check x coord
-        if (abs(camPosition[0] - secondPosition[0]) > (speed * 2)):
-            if (secondPosition[0] > camPosition[0]):
-                change = glm.vec3(
-                    change[0] + abs(step[0]), change[1], change[2])
-            else:
-                change = glm.vec3(
-                    change[0] - abs(step[0]), change[1], change[2])
-
-        # check y coord
-        if (abs(camPosition[1] - secondPosition[1]) > (speed * 2)):
-            if (secondPosition[1] > camPosition[1]):
-                change = glm.vec3(change[0],
-                                  change[1] + abs(step[1]), change[2])
-
-            else:
-                change = glm.vec3(change[0],
-                                  change[1] - abs(step[1]), change[2])
-
-        # # check z coord
-        if (abs(camPosition[2] - secondPosition[2]) > (speed * 2)):
-            if (secondPosition[2] > camPosition[2]):
-                change = glm.vec3(change[0], change[1],
-                                  change[2] + abs(step[2]))
-
-            else:
-                change = glm.vec3(change[0], change[1],
-                                  change[2] + abs(step[2]))
-
-        if (abs(camPosition[0] - secondPosition[0]) < (speed * 2) and abs(camPosition[1] - secondPosition[1]) < (speed * 2) and abs(camPosition[2] - secondPosition[2]) < (speed * 2)):
-            self.switch_camera["center"] = True
+    def mouse_pos_handler(self, window, x_pos, y_pos):
+        if (x_pos != self.input.x):
+            self.input.set_x(x_pos)
         else:
-            cam.set_center(change)
-
-    def lerp_to_camera(self, delta_time):
-        cam = self.get_active_camera()
-        secondCam = self.get_camera(self.switch_camera["camera"])
-        speed = self.switch_camera["speed"]
-
-        camPosition = cam.get_position()
-        secondPosition = secondCam.get_position()
-
-        camQuat = glm.quat(
-            camPosition[0], camPosition[1], camPosition[2], 1.0)
-        secondQuat = glm.quat(
-            secondPosition[0], secondPosition[1], secondPosition[2], 1.0)
-        step = glm.lerp(camQuat, secondQuat, 1.0 - delta_time)
-        step *= speed
-
-        change = glm.vec3(camPosition[0], camPosition[1], camPosition[2])
-
-        # check x coord
-        if (abs(camPosition[0] - secondPosition[0]) > (speed * 5)):
-            if (secondPosition[0] > camPosition[0]):
-                change = glm.vec3(
-                    change[0] + abs(step[0]), change[1], change[2])
-            else:
-                change = glm.vec3(
-                    change[0] - abs(step[0]), change[1], change[2])
-
-        # check y coord
-        if (abs(camPosition[1] - secondPosition[1]) > (speed * 5)):
-            if (secondPosition[1] > camPosition[1]):
-                change = glm.vec3(change[0],
-                                  change[1] + abs(step[1]), change[2])
-
-            else:
-                change = glm.vec3(change[0],
-                                  change[1] - abs(step[1]), change[2])
-
-        # # check z coord
-        if (abs(camPosition[2] - secondPosition[2]) > (speed * 5)):
-            if (secondPosition[2] > camPosition[2]):
-                change = glm.vec3(change[0], change[1],
-                                  change[2] + abs(step[2]))
-
-            else:
-                change = glm.vec3(change[0], change[1],
-                                  change[2] + abs(step[2]))
-
-        if (abs(camPosition[0] - secondPosition[0]) < (speed * 5) and abs(camPosition[1] - secondPosition[1]) < (speed * 5) and abs(camPosition[2] - secondPosition[2]) < (speed * 5)):
-            self.set_active_camera(secondCam.get_name())
-            self.switch_camera["position"] = True
+            self.input.delta_x = 0
+        if (y_pos != self.input.y):
+            self.input.set_y(y_pos)
         else:
-            cam.set_position(change)
+            self.input.delta_y = 0
+
+    def mouse_button_handler(self, window, button, action, mods):
+        if (button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.PRESS):
+            if (action == glfw.PRESS):
+                self.input.handle_right_click_press()
+                self.input.mouse_right_down = True
+            elif (action == glfw.RELEASE):
+                self.input.mouse_right_down = False                
+        if (button == glfw.MOUSE_BUTTON_LEFT):
+            if (action == glfw.PRESS):
+                self.input.handle_left_click_press()
+                self.input.mouse_left_down = True
+            elif (action == glfw.RELEASE):
+                self.input.mouse_left_down = False
+
+    def mouse_scroll_handler(self, window, x_offset, y_offset):
+        if (y_offset == 1.0):
+            self.input.handle_mouse_zoom_in()
+        elif (y_offset == -1.0):
+            self.input.handle_mouse_zoom_out()
 
     def update(self, delta_time):
+        self.delta_time = delta_time
+        cam = self.get_active_camera()
 
-        # check if camera switching is occuring
-        if (self.switch_camera["camera"]):
-            if (not self.switch_camera["position"]):
-                self.lerp_to_camera(delta_time)
-            if (not self.switch_camera["center"]):
-                self.lerp_camera_center(delta_time)
+        # check if camera is looking or moving
+        if(cam.state["moving"]):
+            cam.lerp_camera_position(delta_time)
+        if (cam.state["looking"]):
+            cam.lerp_camera_center(delta_time)
 
-            if (self.switch_camera["center"] and self.switch_camera["position"]):
-                self.set_active_camera(self.switch_camera["camera"])
-                self.switch_camera = {"camera": None,
-                                      "center": False, "position": False, "speed": 0.0}
+        if (self.input.mouse_left_down):
+            if (self.input.delta_x > 1.0 or self.input.delta_x < -1.0):
+                cam.set_horiz_spin(cam.get_horiz_spin() + self.input.delta_x)
+                cam.rotate_horizontal()
+
+            # TODO implement vertical camera rotation
+            # if (self.input.delta_y > 1.0 or self.input.delta_y < -1.0):
+            #     cam.set_vert_spin(cam.get_vert_spin() + self.input.delta_y)
+            #     cam.rotate_vertical()
+            
