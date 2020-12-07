@@ -46,9 +46,8 @@ def main_loop(window):
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
         camera = sm.get_active_camera()
-        view_matrix = glm.lookAt(
-            camera.get_position(), camera.get_center(), camera.get_up())
-        renderer.set_view_matrix(view_matrix)
+        camera.update()
+        renderer.set_view_matrix(camera.view_matrix)
 
         delta = current_time - previous_time
         previous_time = current_time
@@ -74,7 +73,8 @@ def key_handler(window, key, scan_code, action, mods):
         cam.rotate_horizontal(0.5, sm.delta_time)
     elif (key == glfw.KEY_D):
         # cam.move_backward(sm.delta_time)
-        cam.rotate_horizontal(glfw.get_time(), sm.delta_time)
+        # cam.rotate_around_horizontal(glfw.get_time(), 5, 1, False)
+        cam.rotate_horizontal()
     elif (key == glfw.KEY_Q):
         # sm.get_active_camera().set_target(glm.vec3(0, 0, 0), glm.vec3(0, 6, 0), 0.5, 0.05)
         # sm.get_active_camera().set_target(glm.vec3(0, 0, 0), sm.get_active_camera().get_center(), 0.5, 0.05)
@@ -125,12 +125,18 @@ if __name__ == '__main__':
 
     # sm.debug_window = GlfwRenderer(window)
 
-    sm.input.handle_left_click_press = lambda: print("Here!")
+    sm.input.handle_right_click_press = lambda: print("Here!")
     sm.input.handle_mouse_zoom_in = lambda: sm.get_active_camera().move_toward(sm.delta_time)
     sm.input.handle_mouse_zoom_out = lambda: sm.get_active_camera().move_backward(sm.delta_time)
 
     my_light = Pointlight("light1")
     my_light.set_position(glm.vec3(1.0, 10.0, 0.0))
+    my_light.set_strength(100.0)
+    sm.add_point_light(my_light)
+
+    
+    my_light = Pointlight("light2")
+    my_light.set_position(glm.vec3(25.0, 10.0, 25.0))
     my_light.set_strength(100.0)
     sm.add_point_light(my_light)
 
@@ -178,7 +184,7 @@ if __name__ == '__main__':
     my_plane.setup()
     sm.add_object(my_plane)
 
-    camera = ThirdPersonCamera("mainCam", position=glm.vec3(10, 2.0, -15),
+    camera = ThirdPersonCamera("mainCam", position=glm.vec3(-25, 10.0, 25),
                                center=test_cube.get_centroid(), up=glm.vec3(0.0, 1.0, 0.0))
 
     sm.add_camera(camera)

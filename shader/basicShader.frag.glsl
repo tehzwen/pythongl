@@ -29,7 +29,8 @@ uniform int diffuseSamplerExists;
 uniform sampler2D diffuseSampler;
 
 vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 diffuseValue) {
-    vec3 ambient = material.ambient * light.color * material.diffuse;
+    vec3 ambient = material.ambient * light.color;
+    ambient = mix(ambient, diffuseValue, 0.05);
     vec3 lightDir = normalize(light.position - fragPos);
     float diff = max(dot(normal, lightDir), 0.0);
     float distance = length(light.position - fragPos);
@@ -45,7 +46,12 @@ void main(){
 
     if (diffuseSamplerExists == 1) {
         for (int i = 0; i < numPointLights; i++) {
-            total += CalculatePointLight(pointLights[i], normalInterp, oFragPosition, material.diffuse * texture(diffuseSampler, oUV).rgb);
+            vec4 textureColor = texture(diffuseSampler, oUV);
+            if (textureColor.a < 1.0) {
+                discard;
+            } else {
+                total += CalculatePointLight(pointLights[i], normalInterp, oFragPosition, material.diffuse * textureColor.rgb);
+            }
         }
     } else {
         for (int i = 0; i < numPointLights; i++) {

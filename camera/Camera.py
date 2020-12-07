@@ -17,6 +17,7 @@ class Camera():
                       "move_speed": 0,
                       "look_speed": 0}
         self.distance = glm.distance(self._position, self._center)
+        self.view_matrix = glm.mat4()
 
     def get_position(self):
         return self._position
@@ -71,3 +72,7 @@ class Camera():
             self.set_position(glm.vec3(-xCam, self._position[1], -zCam))
         else:
             self.set_position(glm.vec3(-xCam, self._position[1], zCam))
+
+    def update(self):
+        self.view_matrix = glm.lookAt(
+            self.get_position(), self.get_center(), self.get_up())

@@ -92,7 +92,7 @@ class Manager():
             self.input.delta_y = 0
 
     def mouse_button_handler(self, window, button, action, mods):
-        if (button == glfw.MOUSE_BUTTON_RIGHT and action == glfw.PRESS):
+        if (button == glfw.MOUSE_BUTTON_RIGHT):
             if (action == glfw.PRESS):
                 self.input.handle_right_click_press()
                 self.input.mouse_right_down = True
@@ -116,17 +116,32 @@ class Manager():
         cam = self.get_active_camera()
 
         # check if camera is looking or moving
-        if(cam.state["moving"]):
+        if (cam.state["moving"]):
             cam.lerp_camera_position(delta_time)
         if (cam.state["looking"]):
             cam.lerp_camera_center(delta_time)
 
-        if (self.input.mouse_left_down):
+        if (self.input.mouse_right_down):
             if (self.input.delta_x > 1.0 or self.input.delta_x < -1.0):
-                cam.set_horiz_spin(cam.get_horiz_spin() + self.input.delta_x)
+                cam.rate_x += self.input.delta_x
                 cam.rotate_horizontal()
 
-            # TODO implement vertical camera rotation
-            # if (self.input.delta_y > 1.0 or self.input.delta_y < -1.0):
-            #     cam.set_vert_spin(cam.get_vert_spin() + self.input.delta_y)
-            #     cam.rotate_vertical()
+            if (self.input.delta_y > 1.0 or self.input.delta_y < -1.0):
+                cam.rotate_vertical(-self.input.delta_y)
+
+        if (self.input.mouse_left_down):
+            forward = cam.get_center() - cam.get_position()
+            right = glm.cross(forward, cam.get_up())
+
+            out_vec = glm.vec3(0, 0, 0)
+            if (self.input.delta_x < -1.0):
+                out_vec -= right
+            elif (self.input.delta_x > 1.0):
+                out_vec += right
+
+            if (self.input.delta_y > 1.0):
+                out_vec += glm.vec3(-forward[0], 0.0, -forward[2])
+            elif (self.input.delta_y < -1.0):
+                out_vec += glm.vec3(forward[0], 0.0, forward[2])
+
+            cam.translate(out_vec)

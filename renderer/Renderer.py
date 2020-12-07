@@ -35,7 +35,7 @@ class Renderer():
         self.set_shader(geo.shader)
         self.link_matrices(geo.model.get_matrix())
         self.render_lights(lights)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(
+        gl.glDrawElements(gl.GL_TRIANGLE_STRIP, len(
                     geo.get_indices()), gl.GL_UNSIGNED_INT, None)
     
     def render_mesh(self, mesh, lights):
