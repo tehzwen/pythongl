@@ -1,8 +1,8 @@
-import contextlib
 import sys
 from OpenGL import GL as gl
 import glfw
 import glm
+import numpy as np
 import math
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
@@ -28,7 +28,7 @@ def main_loop(window):
 
     width, height = sm.get_dimensions()
     # create projection matrix
-    proj_matrix = glm.perspective(glm.radians(90), width/height, 0.1, 1000)
+    proj_matrix = glm.perspective(glm.radians(90), width/height, 0.1, 10000)
 
     renderer = Renderer()
     renderer.set_projection_matrix(proj_matrix)
@@ -45,6 +45,8 @@ def main_loop(window):
         current_time = glfw.get_time()
         gl.glEnable(gl.GL_DEPTH_TEST)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        r, g, b, a = sm.get_background_color()
+        gl.glClearColor(r, g, b, a)
         camera = sm.get_active_camera()
         camera.update()
         renderer.set_view_matrix(camera.view_matrix)
@@ -56,9 +58,9 @@ def main_loop(window):
         # link objects
         for key, object in sm.get_objects().items():
             if (isinstance(object, Geometry)):
-                renderer.render_geometry(object, sm.get_point_lights())
+                renderer.render_geometry(object, sm)
             else:
-                renderer.render_mesh(object, sm.get_point_lights())
+                renderer.render_mesh(object, sm)
         glfw.swap_buffers(window)
         glfw.poll_events()
 
@@ -66,25 +68,10 @@ def main_loop(window):
 def key_handler(window, key, scan_code, action, mods):
     global sm
 
-    cam = sm.get_active_camera()
+    quad = sm.get_object("testPlane")
 
     if (key == glfw.KEY_A):
-        # cam.move_toward(sm.delta_time)
-        cam.rotate_horizontal(0.5, sm.delta_time)
-    elif (key == glfw.KEY_D):
-        # cam.move_backward(sm.delta_time)
-        # cam.rotate_around_horizontal(glfw.get_time(), 5, 1, False)
-        cam.rotate_horizontal()
-    elif (key == glfw.KEY_Q):
-        # sm.get_active_camera().set_target(glm.vec3(0, 0, 0), glm.vec3(0, 6, 0), 0.5, 0.05)
-        # sm.get_active_camera().set_target(glm.vec3(0, 0, 0), sm.get_active_camera().get_center(), 0.5, 0.05)
-        sm.get_active_camera().set_target(
-            sm.get_active_camera().get_position(), glm.vec3(0, -6, 5), 0.5, 0.05)
-
-    elif (key == glfw.KEY_1):
-        sm.get_active_camera().rotate_around_horizontal(glfw.get_time(), 0.5, 20, False)
-
-
+        quad.rotate(glm.vec3(1.0, 0.0, 0.0), 15)
 def create_main_window():
     global sm
     if not glfw.init():
@@ -108,58 +95,50 @@ def create_main_window():
     glfw.set_cursor_pos_callback(window, sm.mouse_pos_handler)
     glfw.set_mouse_button_callback(window, sm.mouse_button_handler)
     glfw.set_scroll_callback(window, sm.mouse_scroll_handler)
-    r, g, b, a = sm.get_background_color()
-    gl.glClearColor(r, g, b, a)
     glfw.set_window_size_callback(window, window_resize_listener)
 
     return window
+
 
 def window_resize_listener(window, width, height):
     global sm
     sm.set_dimensions(width, height)
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     # imgui.create_context()
     window = create_main_window()
 
     # sm.debug_window = GlfwRenderer(window)
 
-    sm.input.handle_right_click_press = lambda: print("Here!")
+    # sm.input.handle_right_click_press = lambda: print("Here!")
     sm.input.handle_mouse_zoom_in = lambda: sm.get_active_camera().move_toward(sm.delta_time)
     sm.input.handle_mouse_zoom_out = lambda: sm.get_active_camera().move_backward(sm.delta_time)
+    sm.set_background_color(glm.vec4(0.0, 0.0, 0.2, 1.0))
 
     my_light = Pointlight("light1")
     my_light.set_position(glm.vec3(1.0, 10.0, 0.0))
-    my_light.set_strength(100.0)
+    my_light.set_strength(1)
     sm.add_point_light(my_light)
 
-    
-    my_light = Pointlight("light2")
-    my_light.set_position(glm.vec3(25.0, 10.0, 25.0))
-    my_light.set_strength(100.0)
-    sm.add_point_light(my_light)
+    # my_light = Pointlight("light2")
+    # my_light.set_position(glm.vec3(250.0, 10.0, 25.0))
+    # my_light.set_color(glm.vec3(0.5, 0.0, 0.0))
+    # my_light.set_strength(2)
+    # sm.add_point_light(my_light)
 
-    # earth = Mesh("earth")
-    # earth.load_model(filename="earth.obj")
-    # earth.scale(glm.vec3(0.5, 0.5, 0.5))
-    # earth.translate(glm.vec3(0.25, -3.0, 0.0))
-    # earth.calc_model_matrix()
-    # sm.add_object(earth)
-
-    # tree = Mesh("tree")
-    # tree.load_model(filename="Lowpoly_tree_sample.obj")
-    # tree.scale(glm.vec3(0.25, 0.25, 0.25))
-    # tree.translate(glm.vec3(-4, -10, 0.0))
-    # tree.calc_model_matrix()
-    # sm.add_object(tree)
+    car = Mesh("car")
+    car.load_model(filename="car_new.obj")
+    car.scale(glm.vec3(0.5, 0.5, 0.5))
+    car.translate(glm.vec3(35, 0, 0.0))
+    sm.add_object(car)
 
     test_cube = Cube("testCube", material=Material(
         ambient=glm.vec3(0.4, 0.4, 0.4), diffuse=glm.vec3(0.5, 0, 0)))
     test_cube.shader.load_frag_source(file_name="basicShader.frag.glsl")
     test_cube.shader.load_vert_source(file_name="basicShader.vert.glsl")
     test_cube.shader.init()
-    test_cube.translate(glm.vec3(-8, -1.0, 0.0))
+    test_cube.translate(glm.vec3(1.0, 10.0, 0.0))
     test_cube.setup()
     sm.add_object(test_cube)
 
@@ -173,22 +152,22 @@ if __name__ == '__main__':
     my_cube.setup()
     sm.add_object(my_cube)
 
-    my_plane = Quad("testPlane", material=Material(
+    my_plane = Quad("testPlane", 10, 20, material=Material(
         ambient=glm.vec3(0.5, 0.5, 0.5)))
     my_plane.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_plane.shader.load_vert_source(file_name="basicShader.vert.glsl")
     my_plane.shader.init()
-    # my_plane.set_diffuse_texture(filename="poggers.png")
-    my_plane.translate(glm.vec3(0.0, -2.0, 0.0))
-    my_plane.scale(glm.vec3(1000, 1, 1000))
+    my_plane.set_diffuse_texture(filename="grass.jpg")
+    # my_plane.translate(glm.vec3(0.0, -15.0, 0.0))
+    # my_plane.scale(glm.vec3(1000, 1, 1000))
+    my_plane.material.n = 50
     my_plane.setup()
     sm.add_object(my_plane)
 
     camera = ThirdPersonCamera("mainCam", position=glm.vec3(-25, 10.0, 25),
-                               center=test_cube.get_centroid(), up=glm.vec3(0.0, 1.0, 0.0))
+                               center=glm.vec3(0.0, 0.0, 0.0), up=glm.vec3(0.0, 1.0, 0.0))
 
     sm.add_camera(camera)
     sm.get_active_camera().set_zoom_speed(5.0)
-
 
     main_loop(window)

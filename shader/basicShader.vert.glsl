@@ -19,7 +19,7 @@ out vec2 oUV;
 void main(){
     oNormal = vertexNormal;
     oFragPosition = (modelMatrix * vec4(vertexPosition, 1.0)).xyz;
-    normalInterp = normalize((normalMatrix * vec4(vertexNormal, 0.0)).xyz);
+    normalInterp = normalize((normalMatrix * vec4(vertexNormal, 1.0)).xyz);
     oCameraPosition = cameraPosition;
     oUV = -texture_coords;
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vertexPosition, 1.0);

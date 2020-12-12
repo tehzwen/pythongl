@@ -12,9 +12,9 @@ class Material():
         self.shader_type = shader_type if shader_type else 1
         self.alpha = alpha if alpha else 1.0
         self.n = nVal if nVal else 1.0
-        self.diffuseTexture = self.load_texture(
-            diffuseTextureFile) if diffuseTexture else None
         self.diffuseTextureFile = diffuseTexture
+        self.diffuseTexture = self.load_texture(
+            self.diffuseTextureFile) if diffuseTexture else None
 
     def __repr__(self):
         return (

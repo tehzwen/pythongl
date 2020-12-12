@@ -38,10 +38,10 @@ class Mesh():
         self.model.set_matrix(model_matrix)
 
     def get_worldspace_centroid(self):
-        temp = glm.vec4(self.centroid[0], self.centroid[1], self.centroid[2], 1.0)
+        temp = glm.vec4(self.centroid[0],
+                        self.centroid[1], self.centroid[2], 1.0)
         temp *= self.model.get_matrix()
         return glm.vec3(temp[0], temp[1], temp[2])
-        
 
     def rotate(self, rot_vec, angle):
         self.model.rotate(rot_vec, angle)
@@ -89,7 +89,7 @@ class Mesh():
                     child.setup()
 
         except Exception as e:
-            print(e)
+            print("ERROR: ", e)
 
 
 class MeshChild(Geometry):
@@ -127,6 +127,9 @@ class MeshChild(Geometry):
 
         if ("file, 1" in material_data):
             self.material.diffuseTextureFile = material_data["file, 1"]
+
+        if (self.material.n <= 0.0):
+            self.material.n = 1.0
 
     def setup(self):
         self.model = Model()
