@@ -55,8 +55,14 @@ class Geometry:
     def create_vao(self):
         self.vao = gl.glGenVertexArrays(1)
 
+    def bind(self):
+        gl.glBindVertexArray(self.vao)
+
     def bind_vao(self):
         gl.glBindVertexArray(self.vao)
+
+    def unbind_vao(self):
+        gl.glBindVertexArray(0)
 
     def set_diffuse_texture(self, filename):
         self.material.set_diffuse_texture("./res/materials/" + filename)
@@ -92,11 +98,7 @@ class Geometry:
         self.model.set_matrix(model_matrix)
 
     def create_vertex_buffer(self):
-        if not self.vao:
-            self.create_vao()
-            self.bind_vao()
-
-        attr_id = 0  # No particular reason for 0,
+        self.vertex_attrib = 0  # No particular reason for 0,
         # but must match the layout location in the shader.
 
         self.vertex_buffer = gl.glGenBuffers(1)
@@ -110,21 +112,19 @@ class Geometry:
                         array_type(*self.get_vertices()),
                         gl.GL_STATIC_DRAW)
 
+        gl.glEnableVertexAttribArray(self.vertex_attrib)
         gl.glVertexAttribPointer(
-            attr_id,            # attribute 0.
+            self.vertex_attrib,            # attribute 0.
             3,                  # components per vertex attribute
             gl.GL_FLOAT,        # type
             False,              # to be normalized?
             0,                  # stride
             None                # array buffer offset
         )
-        self.vertex_attrib = attr_id
 
     def create_normal_buffer(self):
-        attr_id = 1
-
+        self.normal_attrib = 1
         self.normal_buffer = gl.glGenBuffers(1)
-
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.normal_buffer)
 
         array_type = (gl.GLfloat * len(self.get_normals()))
@@ -134,8 +134,9 @@ class Geometry:
                         array_type(*self.get_normals()),
                         gl.GL_STATIC_DRAW)
 
+        gl.glEnableVertexAttribArray(self.normal_attrib)
         gl.glVertexAttribPointer(
-            attr_id,            # attribute 0.
+            self.normal_attrib,            # attribute 0.
             3,                  # components per vertex attribute
             gl.GL_FLOAT,        # type
             False,              # to be normalized?
@@ -143,12 +144,11 @@ class Geometry:
             None                # array buffer offset
         )
 
-        self.normal_attrib = attr_id
-
     def create_texture_buffer(self):
-        attr_id = 2
+        self.texture_attrib = 2
 
         self.texture_buffer = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.texture_buffer)
         array_type = (gl.GLfloat * len(self.get_texture_coords()))
         gl.glBufferData(gl.GL_ARRAY_BUFFER,
                         len(self.get_texture_coords()) *
@@ -156,22 +156,16 @@ class Geometry:
                         array_type(*self.get_texture_coords()),
                         gl.GL_STATIC_DRAW)
 
+        gl.glEnableVertexAttribArray(self.texture_attrib)
+
         gl.glVertexAttribPointer(
-            attr_id,            # attribute 0.
+            self.texture_attrib,            # attribute 0.
             2,                  # components per vertex attribute
             gl.GL_FLOAT,        # type
             False,              # to be normalized?
             0,                  # stride
             None                # array buffer offset
         )
-
-        self.texture_attrib = attr_id
-
-    def enable_vertex_attrib(self):
-        gl.glEnableVertexAttribArray(
-            self.vertex_attrib)  # use currently bound VAO
-        gl.glEnableVertexAttribArray(self.normal_attrib)
-        gl.glEnableVertexAttribArray(self.texture_attrib)
 
     def create_index_buffer(self):
         index_buffer = gl.glGenBuffers(1)
@@ -190,19 +184,15 @@ class Geometry:
 
         self.index_buffer = index_buffer
 
-    def bind_index_buffer(self):
-        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.index_buffer)
-
     def setup(self):
+        self.create_vao()
+        self.bind_vao()
         self.calculate_centroid()
         self.create_vertex_buffer()
         self.create_normal_buffer()
         self.create_texture_buffer()
         self.create_index_buffer()
-
-    def bind(self):
-        self.bind_vao()
-        self.enable_vertex_attrib()
+        self.unbind_vao()
 
     def rotate(self, vector, angle):
         self.model.rotate(vector, angle)

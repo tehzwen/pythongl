@@ -1,4 +1,5 @@
 import glm
+import ctypes
 from OpenGL import GL as gl
 
 
@@ -28,6 +29,7 @@ class Renderer():
         self._view_matrix = mat
 
     def render_geometry(self, geo, sm):
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE); # enables wireframe
         lights = sm.get_point_lights()
         geo.shader.bind()
         geo.bind()
@@ -38,7 +40,8 @@ class Renderer():
         self.render_point_lights(lights)
         self.link_camera(sm.get_active_camera())
         gl.glDrawElements(gl.GL_TRIANGLES, len(
-            geo.get_indices()), gl.GL_UNSIGNED_INT, None)
+            geo.get_indices()), gl.GL_UNSIGNED_INT, ctypes.c_void_p(0))
+        geo.unbind_vao()
 
     def render_mesh(self, mesh, sm):
         lights = sm.get_point_lights()
@@ -52,7 +55,8 @@ class Renderer():
             self.render_point_lights(lights)
             self.link_camera(sm.get_active_camera())
             gl.glDrawElements(gl.GL_TRIANGLES, len(
-                child.get_indices()), gl.GL_UNSIGNED_INT, None)
+                child.get_indices()), gl.GL_UNSIGNED_INT, ctypes.c_void_p(0))
+            child.unbind_vao()
 
     def link_matrices(self, model_matrix):
         self._shader.link_mat4(

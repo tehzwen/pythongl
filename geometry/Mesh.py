@@ -133,7 +133,10 @@ class MeshChild(Geometry):
 
     def setup(self):
         self.model = Model()
+        self.create_vao()
+        self.bind_vao()
         self.create_vertex_buffer()
         self.create_normal_buffer()
         self.create_texture_buffer()
         self.create_index_buffer()
+        self.unbind_vao()

@@ -117,7 +117,7 @@ if __name__ == '__main__':
     sm.set_background_color(glm.vec4(0.0, 0.0, 0.2, 1.0))
 
     my_light = Pointlight("light1")
-    my_light.set_position(glm.vec3(1.0, 10.0, 0.0))
+    my_light.set_position(glm.vec3(0.0, 5.0, 0.0))
     my_light.set_strength(1)
     sm.add_point_light(my_light)
 
@@ -127,45 +127,67 @@ if __name__ == '__main__':
     # my_light.set_strength(2)
     # sm.add_point_light(my_light)
 
-    car = Mesh("car")
-    car.load_model(filename="car_new.obj")
-    car.scale(glm.vec3(0.5, 0.5, 0.5))
-    car.translate(glm.vec3(35, 0, 0.0))
-    sm.add_object(car)
+    # car = Mesh("car")
+    # car.load_model(filename="car_new.obj")
+    # car.scale(glm.vec3(0.5, 0.5, 0.5))
+    # car.translate(glm.vec3(35, 0, 0.0))
+    # sm.add_object(car)
 
-    test_cube = Cube("testCube", material=Material(
-        ambient=glm.vec3(0.4, 0.4, 0.4), diffuse=glm.vec3(0.5, 0, 0)))
-    test_cube.shader.load_frag_source(file_name="basicShader.frag.glsl")
-    test_cube.shader.load_vert_source(file_name="basicShader.vert.glsl")
-    test_cube.shader.init()
-    test_cube.translate(glm.vec3(1.0, 10.0, 0.0))
-    test_cube.setup()
-    sm.add_object(test_cube)
+    # test_cube = Cube("testCube", material=Material(
+    #     ambient=glm.vec3(0.4, 0.4, 0.4), diffuse=glm.vec3(0.5, 0, 0)))
+    # test_cube.shader.load_frag_source(file_name="basicShader.frag.glsl")
+    # test_cube.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    # test_cube.shader.init()
+    # test_cube.translate(glm.vec3(1.0, 10.0, 0.0))
+    # test_cube.setup()
+    # sm.add_object(test_cube)
 
     my_cube = Cube("myCube")
     my_cube.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_cube.shader.load_vert_source(file_name="basicShader.vert.glsl")
     my_cube.shader.init()
-    my_cube.set_diffuse_texture(filename="poggers.png")
-    my_cube.translate(glm.vec3(9, -1.0, 0.0))
-    my_cube.scale(glm.vec3(10, 3, 3))
+    my_cube.set_diffuse_texture(filename="default.jpg")
+    my_cube.translate(glm.vec3(-10, 0.2, -10))
+    # my_cube.scale(glm.vec3(10, 3, 3))
     my_cube.setup()
     sm.add_object(my_cube)
 
-    my_plane = Quad("testPlane", 10, 20, material=Material(
-        ambient=glm.vec3(0.5, 0.5, 0.5)))
+
+    my_cube2 = Cube("myCube2")
+    my_cube2.shader.load_frag_source(file_name="basicShader.frag.glsl")
+    my_cube2.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    my_cube2.shader.init()
+    my_cube2.set_diffuse_texture(filename="default.jpg")
+    my_cube2.translate(glm.vec3(-10.0, 0.2, 0))
+    # my_cube.scale(glm.vec3(10, 3, 3))
+    my_cube2.setup()
+    sm.add_object(my_cube2)
+
+
+
+    my_cube3 = Cube("myCube3-ZAXIS")
+    my_cube3.shader.load_frag_source(file_name="basicShader.frag.glsl")
+    my_cube3.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    my_cube3.shader.init()
+    my_cube3.set_diffuse_texture(filename="default.jpg")
+    my_cube3.translate(glm.vec3(0.0, 5.0, -10))
+    my_cube3.scale(glm.vec3(11, 1, 3))
+    my_cube3.setup()
+    sm.add_object(my_cube3)
+
+
+
+    my_plane = Quad("testPlane", 10, 2, material=Material(
+        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=500))
     my_plane.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_plane.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    my_plane.set_diffuse_texture(filename="default.jpg")
     my_plane.shader.init()
-    my_plane.set_diffuse_texture(filename="grass.jpg")
-    # my_plane.translate(glm.vec3(0.0, -15.0, 0.0))
-    # my_plane.scale(glm.vec3(1000, 1, 1000))
-    my_plane.material.n = 50
     my_plane.setup()
     sm.add_object(my_plane)
 
-    camera = ThirdPersonCamera("mainCam", position=glm.vec3(-25, 10.0, 25),
-                               center=glm.vec3(0.0, 0.0, 0.0), up=glm.vec3(0.0, 1.0, 0.0))
+    camera = ThirdPersonCamera("mainCam", position=glm.vec3(-5, 10.0, 5),
+                               center=glm.vec3(0,0,0), up=glm.vec3(0.0, 1.0, 0.0))
 
     sm.add_camera(camera)
     sm.get_active_camera().set_zoom_speed(5.0)

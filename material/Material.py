@@ -32,6 +32,7 @@ DiffuseTexture: {str(self.diffuseTextureFile)}'''
         self.diffuseTexture = self.load_texture(filename)
 
     def load_texture(self, filename=None):
+        image = None
         try:
             image = Image.open(filename)
         except IOError as ex:
@@ -47,12 +48,18 @@ DiffuseTexture: {str(self.diffuseTextureFile)}'''
         # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_R, gl.GL_CLAMP)
         # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP)
 
+        gl.glTexParameteri(
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
+        gl.glTexParameteri(
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
+
+        gl.glTexParameteri(
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+        gl.glTexParameteri(
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+
         gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, image.size[0], image.size[1],
                         0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, imageData)
-        # gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_NEAREST)
-        gl.glTexParameterf(
-            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
-        gl.glTexParameterf(
-            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+
         image.close()
         return textureID

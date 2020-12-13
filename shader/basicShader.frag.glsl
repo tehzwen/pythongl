@@ -27,7 +27,7 @@ struct PointLight {
 uniform int numPointLights;
 uniform Material material;
 uniform PointLight[MAX_POINT_LIGHTS] pointLights;
-uniform int diffuseSamplerExists;
+uniform bool diffuseSamplerExists;
 uniform sampler2D diffuseSampler;
 
 vec3 CalculatePointLight(PointLight light, vec3 cameraPosition, vec3 normal, vec3 fragPos, vec3 diffuseValue) {
@@ -42,22 +42,22 @@ vec3 CalculatePointLight(PointLight light, vec3 cameraPosition, vec3 normal, vec
     vec3 reflectDir = reflect(-lightDir, normal);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     vec3 specular = spec * light.color;  
-    return (diffuse);
+    return attenuation * (ambient + diffuse + specular);
 }
 
 
 void main(){
     vec3 total = vec3(0,0,0);
-
-    if (diffuseSamplerExists == 1) {
-        for (int i = 0; i < numPointLights; i++) {
-            vec4 textureColor = texture(diffuseSampler, oUV);
-            total += CalculatePointLight(pointLights[i], oCameraPosition, normalInterp, oFragPosition, material.diffuse * textureColor.rgb);
-        }
-    } else {
-        for (int i = 0; i < numPointLights; i++) {
-            total += CalculatePointLight(pointLights[i], oCameraPosition, normalInterp, oFragPosition, material.diffuse);
-        }
-    }
-    fragColor = vec4(normalInterp, material.alpha);
+    total = vec3(0.5, 0.5, 0.5);
+    // if (diffuseSamplerExists) {
+    //     for (int i = 0; i < numPointLights; i++) {
+    //         vec4 textureColor = texture(diffuseSampler, oUV);
+    //         total += CalculatePointLight(pointLights[i], oCameraPosition, normalInterp, oFragPosition, material.diffuse * textureColor.rgb);
+    //     }
+    // } else {
+    //     for (int i = 0; i < numPointLights; i++) {
+    //         total += CalculatePointLight(pointLights[i], oCameraPosition, normalInterp, oFragPosition, material.diffuse);
+    //     }
+    // }
+    fragColor = vec4(total, material.alpha);
 }
