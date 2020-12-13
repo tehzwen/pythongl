@@ -48,16 +48,15 @@ vec3 CalculatePointLight(PointLight light, vec3 cameraPosition, vec3 normal, vec
 
 void main(){
     vec3 total = vec3(0,0,0);
-    total = vec3(0.5, 0.5, 0.5);
-    // if (diffuseSamplerExists) {
-    //     for (int i = 0; i < numPointLights; i++) {
-    //         vec4 textureColor = texture(diffuseSampler, oUV);
-    //         total += CalculatePointLight(pointLights[i], oCameraPosition, normalInterp, oFragPosition, material.diffuse * textureColor.rgb);
-    //     }
-    // } else {
-    //     for (int i = 0; i < numPointLights; i++) {
-    //         total += CalculatePointLight(pointLights[i], oCameraPosition, normalInterp, oFragPosition, material.diffuse);
-    //     }
-    // }
+    if (diffuseSamplerExists) {
+        for (int i = 0; i < numPointLights; i++) {
+            vec4 textureColor = texture(diffuseSampler, oUV);
+            total += CalculatePointLight(pointLights[i], oCameraPosition, normalInterp, oFragPosition, material.diffuse * textureColor.rgb);
+        }
+    } else {
+        for (int i = 0; i < numPointLights; i++) {
+            total += CalculatePointLight(pointLights[i], oCameraPosition, normalInterp, oFragPosition, material.diffuse);
+        }
+    }
     fragColor = vec4(total, material.alpha);
 }

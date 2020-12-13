@@ -177,8 +177,8 @@ if __name__ == '__main__':
 
 
 
-    my_plane = Quad("testPlane", 10, 2, material=Material(
-        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=500))
+    my_plane = Quad("testPlane", 10, 20, material=Material(
+        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=50))
     my_plane.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_plane.shader.load_vert_source(file_name="basicShader.vert.glsl")
     my_plane.set_diffuse_texture(filename="default.jpg")

@@ -29,7 +29,7 @@ class Renderer():
         self._view_matrix = mat
 
     def render_geometry(self, geo, sm):
-        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE); # enables wireframe
+        # gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE); # enables wireframe
         lights = sm.get_point_lights()
         geo.shader.bind()
         geo.bind()
