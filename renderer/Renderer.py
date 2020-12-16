@@ -30,6 +30,7 @@ class Renderer():
 
     def render_geometry(self, geo, sm):
         # gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE); # enables wireframe
+        # gl.glEnable(gl.GL_CULL_FACE)
         lights = sm.get_point_lights()
         geo.shader.bind()
         geo.bind()
@@ -39,6 +40,7 @@ class Renderer():
         self.link_matrices(geo.model.get_matrix())
         self.render_point_lights(lights)
         self.link_camera(sm.get_active_camera())
+
         gl.glDrawElements(gl.GL_TRIANGLES, len(
             geo.get_indices()), gl.GL_UNSIGNED_INT, ctypes.c_void_p(0))
         geo.unbind_vao()
@@ -67,7 +69,8 @@ class Renderer():
         self._shader.link_mat4("normalMatrix", self._normal_matrix.to_list())
 
     def link_camera(self, camera):
-        self._shader.link_vec3("cameraPosition", camera.get_position().to_list(), 1)
+        self._shader.link_vec3(
+            "cameraPosition", camera.get_position().to_list(), 1)
 
     def render_point_lights(self, lights):
         count = 0

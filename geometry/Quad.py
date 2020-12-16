@@ -1,6 +1,7 @@
 import random
 import glm
 import math
+import numpy as np
 from geometry.Geometry import *
 from model.Model import *
 from material.Material import *
@@ -17,24 +18,69 @@ class Quad(Geometry):
 
     def create_segmented(self, size, segments):
 
+        vert_dictionary = {}
+
         # helper function to calculate the normals
+
         def calculate_normal(a, b, c):
-            return glm.cross(b - a, c - a).to_list()
+            # N = glm.cross(b - a, c - a)
+            # return glm.normalize(N)
+            return glm.cross(b-a, c-a)
+
+        def get_random(z, x):
+            # return random.uniform(-random_range, random_range)
+            # return 0.1 * np.random.randn()
+            return math.sin(z) * math.sin(x)
+            # return 0
+            # return 4 - (x * x) - (z * z)
+
+        def add_vert_to_dict(vertex, normal, index):
+            if (vertex in vert_dictionary):
+                vert_dictionary[vertex]["normals"].append(normal)
+                vert_dictionary[vertex]["indices"].append(index)
+            else:
+                vert_dictionary[vertex] = {
+                    "normals": [normal],
+                    "indices": [index]
+                }
 
         random_range = 1.0
-        vertices = []
         indices = []
         normals = []
         heights = []
-
         uvs = []
+        smooth = True
+
         current_index = 0
+        current_vert = 0
 
         step = size/segments
         x = -(size)
         z = -(size)
 
+        def add_vert(arr, vert, count):
+            try:
+                arr[count] = vert[0]
+                count += 1
+                arr[count] = vert[1]
+                count += 1
+                arr[count] = vert[2]
+                count += 1
+            except IndexError as e:
+                print(e)
+                raise e
+            return count
+
         grid_num = int((size * 2)/step)
+
+        numpy_verts = np.zeros(
+            ((((int((size * 2)/step) + 1) * (int((size * 2)/step) + 1)) * 18)))  # add a bit of padding for rounding errors
+
+        numpy_norms = np.zeros(
+            ((((int((size * 2)/step) + 1) * (int((size * 2)/step) + 1)) * 18))
+        )
+
+        # each height : {"value":<height val>, "vertex_indices":[<array of all the vertices that use this index>]}
 
         row = 0
         while(x < size):
@@ -42,57 +88,60 @@ class Quad(Geometry):
 
             while(z < size):
                 temp_heights = []
-                temp_vertices = []
+                temp_vertices = np.zeros((18))
 
                 if (row == 0):
                     # check for first initial square
                     if (col == 0):
                         for i in range(4):
-                            val = random.uniform(-random_range, random_range)
-                            temp_heights.append(val)
+                            temp_heights.append(get_random(z, x))
                         # 0
-                        # vertices += [z, temp_heights[0], x]
-                        temp_vertices.append(z)
-                        temp_vertices.append(temp_heights[0])
-                        temp_vertices.append(x)
+                        zero = glm.vec3(z, temp_heights[0], x)
+                        current_vert = add_vert(
+                            numpy_verts, zero, current_vert)
                         # 1
-                        # vertices += [z + step,
-                        #              temp_heights[1], x]
-
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(temp_heights[1])
-                        temp_vertices.append(x)
+                        one = glm.vec3(z + step, temp_heights[1], x)
+                        current_vert = add_vert(numpy_verts, one, current_vert)
                         # 2
-                        # vertices += [z, temp_heights[2], x + step]
-
-                        temp_vertices.append(z)
-                        temp_vertices.append(temp_heights[2])
-                        temp_vertices.append(x + step)
+                        two = glm.vec3(z, temp_heights[2], x + step)
+                        current_vert = add_vert(
+                            numpy_verts, two, current_vert)
                         # 3
-                        # vertices += [z, temp_heights[2], x + step]
-                        temp_vertices.append(z)
-                        temp_vertices.append(temp_heights[2])
-                        temp_vertices.append(x + step)
-
+                        three = glm.vec3(z, temp_heights[2], x + step)
+                        current_vert = add_vert(
+                            numpy_verts, three, current_vert)
                         # 4
-                        # vertices += [z + step,
-                        #              temp_heights[1], x]
+                        four = glm.vec3(z + step, temp_heights[1], x)
+                        current_vert = add_vert(
+                            numpy_verts, four, current_vert)
+                        # 5
+                        five = glm.vec3(z + step, temp_heights[3], x + step)
+                        current_vert = add_vert(
+                            numpy_verts, five, current_vert)
 
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(temp_heights[1])
-                        temp_vertices.append(x)
-                        # # 5
-                        # vertices += [z + step,
-                        #              temp_heights[3], x + step]
+                        if (smooth):
+                            add_vert_to_dict(zero, calculate_normal(
+                                zero, two, one), 0 + current_index)
 
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(temp_heights[3])
-                        temp_vertices.append(x + step)
+                            add_vert_to_dict(one, calculate_normal(
+                                one, zero, two), 1 + current_index)
 
-                    # not at the end of a row
+                            add_vert_to_dict(two, calculate_normal(
+                                two, one, zero), 2 + current_index)
+
+                            add_vert_to_dict(three, calculate_normal(
+                                three, five, four), 3 + current_index)
+
+                            add_vert_to_dict(four, calculate_normal(
+                                four, three, five), 4 + current_index)
+
+                            add_vert_to_dict(five, calculate_normal(
+                                five, four, three), 5 + current_index)
+
+                    # not beginning of row
                     else:
-                        height_2 = random.uniform(-random_range, random_range)
-                        height_3 = random.uniform(-random_range, random_range)
+                        height_2 = get_random(z, x)
+                        height_3 = get_random(z, x)
 
                         temp_heights.append(heights[col - 1][1])
                         temp_heights.append(height_2)
@@ -100,43 +149,54 @@ class Quad(Geometry):
                         temp_heights.append(height_3)
 
                         # 0
-                        # vertices += [z, heights[col - 1][1], x]
-                        temp_vertices.append(z)
-                        temp_vertices.append(heights[col - 1][1])
-                        temp_vertices.append(x)
+                        zero = glm.vec3(z, heights[col - 1][1], x)
+                        current_vert = add_vert(
+                            numpy_verts, zero, current_vert)
                         # 1
-                        # vertices += [z + step, height_2, x]
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(height_2)
-                        temp_vertices.append(x)
+                        one = glm.vec3(z + step, height_2, x)
+                        current_vert = add_vert(
+                            numpy_verts, one, current_vert)
                         # 2
-                        # vertices += [z, heights[col - 1][3], x + step]
-                        temp_vertices.append(z)
-                        temp_vertices.append(heights[col - 1][3])
-                        temp_vertices.append(x + step)
+                        two = glm.vec3(z, heights[col - 1][3], x + step)
+                        current_vert = add_vert(
+                            numpy_verts, two, current_vert)
                         # 3
-                        # vertices += [z, heights[col - 1][3], x + step]
-                        temp_vertices.append(z)
-                        temp_vertices.append(heights[col - 1][3])
-                        temp_vertices.append(x + step)
+                        three = glm.vec3(z, heights[col - 1][3], x + step)
+                        current_vert = add_vert(
+                            numpy_verts, three, current_vert)
                         # 4
-                        # vertices += [z + step, height_2, x]
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(height_2)
-                        temp_vertices.append(x)
+                        four = glm.vec3(z + step, height_2, x)
+                        current_vert = add_vert(
+                            numpy_verts, four, current_vert)
                         # 5
-                        # vertices += [z + step, height_3, x + step]
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(height_3)
-                        temp_vertices.append(x + step)
+                        five = glm.vec3(z + step, height_3, x + step)
+                        current_vert = add_vert(
+                            numpy_verts, five, current_vert)
+
+                        if (smooth):
+                            add_vert_to_dict(zero, calculate_normal(
+                                zero, two, one), 0 + current_index)
+
+                            add_vert_to_dict(one, calculate_normal(
+                                one, zero, two), 1 + current_index)
+
+                            add_vert_to_dict(two, calculate_normal(
+                                two, one, zero), 2 + current_index)
+
+                            add_vert_to_dict(three, calculate_normal(
+                                three, five, four), 3 + current_index)
+
+                            add_vert_to_dict(four, calculate_normal(
+                                four, three, five), 4 + current_index)
+
+                            add_vert_to_dict(five, calculate_normal(
+                                five, four, three), 5 + current_index)
 
                 else:
-
                     # check for first col
-
                     if (col == 0):
-                        height_2 = random.uniform(-random_range, random_range)
-                        height_3 = random.uniform(-random_range, random_range)
+                        height_2 = get_random(z, x)
+                        height_3 = get_random(z, x)
 
                         temp_heights.append(
                             heights[(row * grid_num) - grid_num][2])
@@ -146,50 +206,54 @@ class Quad(Geometry):
                         temp_heights.append(height_3)
 
                         # 0
-                        # vertices += [z,
-                        #              heights[(row * grid_num) - grid_num][2], x]
-
-                        temp_vertices.append(z)
-                        temp_vertices.append(
-                            heights[(row * grid_num) - grid_num][2])
-                        temp_vertices.append(x)
+                        zero = glm.vec3(
+                            z, heights[(row * grid_num) - grid_num][2], x)
+                        current_vert = add_vert(
+                            numpy_verts, zero, current_vert)
                         # 1
-                        # vertices += [z + step,
-                        #              heights[(row * grid_num) - grid_num][3], x]
-
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(
-                            heights[(row * grid_num) - grid_num][3])
-                        temp_vertices.append(x)
+                        one = glm.vec3(
+                            z + step, heights[(row * grid_num) - grid_num][3], x)
+                        current_vert = add_vert(
+                            numpy_verts, one, current_vert)
                         # 2
-                        # vertices += [z, height_2, x + step]
-
-                        temp_vertices.append(z)
-                        temp_vertices.append(height_2)
-                        temp_vertices.append(x + step)
+                        two = glm.vec3(z, height_2, x + step)
+                        current_vert = add_vert(
+                            numpy_verts, two, current_vert)
                         # 3
-                        # vertices += [z, height_2, x + step]
-
-                        temp_vertices.append(z)
-                        temp_vertices.append(height_2)
-                        temp_vertices.append(x + step)
+                        three = glm.vec3(z, height_2, x + step)
+                        current_vert = add_vert(
+                            numpy_verts, three, current_vert)
                         # 4
-                        # vertices += [z + step,
-                        #              heights[(row * grid_num) - grid_num][3], x]
-
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(
-                            heights[(row * grid_num) - grid_num][3])
-                        temp_vertices.append(x)
+                        four = glm.vec3(
+                            z + step, heights[(row * grid_num) - grid_num][3], x)
+                        current_vert = add_vert(
+                            numpy_verts, four, current_vert)
                         # 5
-                        # vertices += [z + step, height_3, x + step]
+                        five = glm.vec3(z + step, height_3, x + step)
+                        current_vert = add_vert(
+                            numpy_verts, five, current_vert)
 
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(height_3)
-                        temp_vertices.append(x + step)
+                        if (smooth):
+                            add_vert_to_dict(zero, calculate_normal(
+                                zero, two, one), 0 + current_index)
+
+                            add_vert_to_dict(one, calculate_normal(
+                                one, zero, two), 1 + current_index)
+
+                            add_vert_to_dict(two, calculate_normal(
+                                two, one, zero), 2 + current_index)
+
+                            add_vert_to_dict(three, calculate_normal(
+                                three, five, four), 3 + current_index)
+
+                            add_vert_to_dict(four, calculate_normal(
+                                four, three, five), 4 + current_index)
+
+                            add_vert_to_dict(five, calculate_normal(
+                                five, four, three), 5 + current_index)
 
                     else:
-                        height_3 = random.uniform(-random_range, random_range)
+                        height_3 = get_random(z, x)
 
                         temp_heights.append(
                             heights[(row * grid_num) + col - 1][1])
@@ -200,78 +264,80 @@ class Quad(Geometry):
                         temp_heights.append(height_3)
 
                         # 0
-                        # vertices += [z,
-                        #              heights[(row * grid_num) + col - 1][1], x]
-
-                        temp_vertices.append(z)
-                        temp_vertices.append(
-                            heights[(row * grid_num) + col - 1][1])
-                        temp_vertices.append(x)
+                        zero = glm.vec3(
+                            z, heights[(row * grid_num) + col - 1][1], x)
+                        current_vert = add_vert(
+                            numpy_verts, zero, current_vert)
                         # 1
-                        # vertices += [z + step,
-                        #              heights[((row * grid_num) - grid_num) + col][3], x]
-
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(
-                            heights[((row * grid_num) - grid_num) + col][3])
-                        temp_vertices.append(x)
+                        one = glm.vec3(
+                            z + step, heights[((row * grid_num) - grid_num) + col][3], x)
+                        current_vert = add_vert(
+                            numpy_verts, one, current_vert)
                         # 2
-                        # vertices += [z,
-                        #              heights[(row * grid_num) + col - 1][3], x + step]
-
-                        temp_vertices.append(z)
-                        temp_vertices.append(
-                            heights[(row * grid_num) + col - 1][3])
-                        temp_vertices.append(x + step)
+                        two = glm.vec3(
+                            z, heights[(row * grid_num) + col - 1][3], x + step)
+                        current_vert = add_vert(
+                            numpy_verts, two, current_vert)
                         # 3
-                        # vertices += [z,
-                        #              heights[(row * grid_num) + col - 1][3], x + step]
-
-                        temp_vertices.append(z)
-                        temp_vertices.append(
-                            heights[(row * grid_num) + col - 1][3])
-                        temp_vertices.append(x + step)
+                        three = glm.vec3(
+                            z, heights[(row * grid_num) + col - 1][3], x + step)
+                        current_vert = add_vert(
+                            numpy_verts, three, current_vert)
                         # 4
-                        # vertices += [z + step,
-                        #              heights[((row * grid_num) - grid_num) + col][3], x]
-
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(
-                            heights[((row * grid_num) - grid_num) + col][3])
-                        temp_vertices.append(x)
+                        four = glm.vec3(
+                            z + step, heights[((row * grid_num) - grid_num) + col][3], x)
+                        current_vert = add_vert(
+                            numpy_verts, four, current_vert)
                         # 5
-                        # vertices += [z + step, height_3, x + step]
+                        five = glm.vec3(z + step, height_3, x + step)
+                        current_vert = add_vert(
+                            numpy_verts, five, current_vert)
 
-                        temp_vertices.append(z + step)
-                        temp_vertices.append(height_3)
-                        temp_vertices.append(x + step)
+                        if (smooth):
+                            add_vert_to_dict(zero, calculate_normal(
+                                zero, one, two), 0 + current_index)
+
+                            add_vert_to_dict(one, calculate_normal(
+                                one, two, zero), 1 + current_index)
+
+                            add_vert_to_dict(two, calculate_normal(
+                                two, one, zero), 2 + current_index)
+
+                            add_vert_to_dict(three, calculate_normal(
+                                three, five, four), 3 + current_index)
+
+                            add_vert_to_dict(four, calculate_normal(
+                                four, three, five), 4 + current_index)
+
+                            add_vert_to_dict(five, calculate_normal(
+                                five, four, three), 5 + current_index)
 
                 indices += [
                     0 + current_index,
                     2 + current_index,
                     1 + current_index,
                     3 + current_index,
-                    4 + current_index,
                     5 + current_index,
+                    4 + current_index,
                 ]
-
                 current_index += 6
 
-                # print(len(temp_vertices))
+                if (not smooth):
+                    temp_vertices = numpy_verts[current_vert -
+                                                18: current_vert].copy()
 
-                for i in range(0, len(temp_vertices), 9):
-                    normal_calc = calculate_normal(
-                        glm.vec3(
-                            temp_vertices[i], temp_vertices[i + 1], temp_vertices[i + 2]),
-                        glm.vec3(
-                            temp_vertices[i + 6], temp_vertices[i + 7], temp_vertices[i + 8]),
-                        glm.vec3(
-                            temp_vertices[i + 3], temp_vertices[i + 4], temp_vertices[i + 5])
-                    )
-                    normals += normal_calc
-                    normals += normal_calc
-                    normals += normal_calc
-
+                    for i in range(0, len(temp_vertices), 9):
+                        normal_calc = calculate_normal(
+                            glm.vec3(
+                                temp_vertices[i], temp_vertices[i + 1], temp_vertices[i + 2]),
+                            glm.vec3(
+                                temp_vertices[i + 6], temp_vertices[i + 7], temp_vertices[i + 8]),
+                            glm.vec3(
+                                temp_vertices[i + 3], temp_vertices[i + 4], temp_vertices[i + 5])
+                        )
+                        normals += normal_calc.to_list()
+                        normals += normal_calc.to_list()
+                        normals += normal_calc.to_list()
                 uvs += [
                     z, x,
                     z + step, x,
@@ -281,7 +347,6 @@ class Quad(Geometry):
                     z + step, x + step
                 ]
                 z += step
-                vertices += temp_vertices
                 heights.append(temp_heights)
                 col += 1
 
@@ -289,7 +354,23 @@ class Quad(Geometry):
             z = -(size)
             x += step
 
-        self._vertices = vertices
-        self._normals = normals
+        # add an if smooth here (requires us changing normals += up there )
+
+        if (smooth):
+            for key in vert_dictionary:
+                temp_normal = glm.vec3(0, 0, 0)
+                for norm in vert_dictionary[key]["normals"]:
+                    temp_normal += norm
+
+                temp_normal = glm.normalize(temp_normal)
+
+                for index in vert_dictionary[key]["indices"]:
+                    actual_index = index * 3
+                    numpy_norms[actual_index] = temp_normal[0]
+                    numpy_norms[actual_index + 1] = temp_normal[1]
+                    numpy_norms[actual_index + 2] = temp_normal[2]
+
+        self._vertices = numpy_verts
+        self._normals = numpy_norms
         self._texture_coords = uvs
         self._indicies = indices
