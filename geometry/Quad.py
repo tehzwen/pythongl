@@ -8,23 +8,20 @@ from material.Material import *
 
 
 class Quad(Geometry):
-    def __init__(self, name, size, segments, material=None, model=None):
+    def __init__(self, name, size, segments, smooth=False, material=None, model=None):
         super().__init__()
-        self.create_segmented(size, segments)
+        self.create_segmented(size, segments, smooth)
         self._type = "quad"
         self._name = name
         self.material = material if material else Material()
         self.model = model if model else Model()
 
-    def create_segmented(self, size, segments):
+    def create_segmented(self, size, segments, smooth):
 
         vert_dictionary = {}
 
         # helper function to calculate the normals
-
         def calculate_normal(a, b, c):
-            # N = glm.cross(b - a, c - a)
-            # return glm.normalize(N)
             return glm.cross(b-a, c-a)
 
         def get_random(z, x):
@@ -44,28 +41,23 @@ class Quad(Geometry):
                     "indices": [index]
                 }
 
-        random_range = 1.0
         indices = []
         normals = []
         heights = []
         uvs = []
-        smooth = True
-
         current_index = 0
         current_vert = 0
 
-        step = size/segments
+        step = round(size/segments, 3)
         x = -(size)
         z = -(size)
 
         def add_vert(arr, vert, count):
             try:
                 arr[count] = vert[0]
-                count += 1
-                arr[count] = vert[1]
-                count += 1
-                arr[count] = vert[2]
-                count += 1
+                arr[count + 1] = vert[1]
+                arr[count + 2] = vert[2]
+                count += 3
             except IndexError as e:
                 print(e)
                 raise e
@@ -73,14 +65,9 @@ class Quad(Geometry):
 
         grid_num = int((size * 2)/step)
 
-        numpy_verts = np.zeros(
-            ((((int((size * 2)/step) + 1) * (int((size * 2)/step) + 1)) * 18)))  # add a bit of padding for rounding errors
 
-        numpy_norms = np.zeros(
-            ((((int((size * 2)/step) + 1) * (int((size * 2)/step) + 1)) * 18))
-        )
-
-        # each height : {"value":<height val>, "vertex_indices":[<array of all the vertices that use this index>]}
+        numpy_verts = np.zeros((grid_num * grid_num * 18))
+        numpy_norms = np.zeros((grid_num * grid_num * 18))
 
         row = 0
         while(x < size):
@@ -323,8 +310,8 @@ class Quad(Geometry):
                 current_index += 6
 
                 if (not smooth):
-                    temp_vertices = numpy_verts[current_vert -
-                                                18: current_vert].copy()
+                    index = current_vert - 18
+                    temp_vertices = numpy_verts[index:current_vert].copy()
 
                     for i in range(0, len(temp_vertices), 9):
                         normal_calc = calculate_normal(
@@ -335,6 +322,7 @@ class Quad(Geometry):
                             glm.vec3(
                                 temp_vertices[i + 3], temp_vertices[i + 4], temp_vertices[i + 5])
                         )
+
                         normals += normal_calc.to_list()
                         normals += normal_calc.to_list()
                         normals += normal_calc.to_list()
@@ -347,14 +335,14 @@ class Quad(Geometry):
                     z + step, x + step
                 ]
                 z += step
+                z = round(z, 3)
                 heights.append(temp_heights)
                 col += 1
 
             row += 1
             z = -(size)
             x += step
-
-        # add an if smooth here (requires us changing normals += up there )
+            x = round(x, 3)
 
         if (smooth):
             for key in vert_dictionary:
@@ -371,6 +359,6 @@ class Quad(Geometry):
                     numpy_norms[actual_index + 2] = temp_normal[2]
 
         self._vertices = numpy_verts
-        self._normals = numpy_norms
+        self._normals = normals if not smooth else numpy_norms
         self._texture_coords = uvs
         self._indicies = indices

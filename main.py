@@ -72,6 +72,8 @@ def key_handler(window, key, scan_code, action, mods):
 
     if (key == glfw.KEY_A):
         quad.rotate(glm.vec3(1.0, 0.0, 0.0), 15)
+
+
 def create_main_window():
     global sm
     if not glfw.init():
@@ -152,7 +154,6 @@ if __name__ == '__main__':
     # my_cube.setup()
     # sm.add_object(my_cube)
 
-
     # my_cube2 = Cube("myCube2")
     # my_cube2.shader.load_frag_source(file_name="basicShader.frag.glsl")
     # my_cube2.shader.load_vert_source(file_name="basicShader.vert.glsl")
@@ -162,8 +163,6 @@ if __name__ == '__main__':
     # # my_cube.scale(glm.vec3(10, 3, 3))
     # my_cube2.setup()
     # sm.add_object(my_cube2)
-
-
 
     # my_cube3 = Cube("myCube3-ZAXIS")
     # my_cube3.shader.load_frag_source(file_name="basicShader.frag.glsl")
@@ -175,19 +174,18 @@ if __name__ == '__main__':
     # my_cube3.setup()
     # sm.add_object(my_cube3)
 
-
-
-    my_plane = Quad("testPlane", 10, 20, material=Material(
-        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=50))
+    my_plane = Quad("testPlane", 40, 40, False, material=Material(
+        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=50, specular=glm.vec3(0.1, 0.1, 0.1)))
     my_plane.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_plane.shader.load_vert_source(file_name="basicShader.vert.glsl")
     my_plane.set_diffuse_texture(filename="default.jpg")
     my_plane.shader.init()
     my_plane.setup()
+    my_plane.scale(glm.vec3(1, 5, 1))
     sm.add_object(my_plane)
 
     camera = ThirdPersonCamera("mainCam", position=glm.vec3(-5, 10.0, 5),
-                               center=glm.vec3(0,0,0), up=glm.vec3(0.0, 1.0, 0.0))
+                               center=glm.vec3(0, 0, 0), up=glm.vec3(0.0, 1.0, 0.0))
 
     sm.add_camera(camera)
     sm.get_active_camera().set_zoom_speed(5.0)
