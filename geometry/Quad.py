@@ -1,4 +1,4 @@
-import random
+import noise
 import glm
 import math
 import numpy as np
@@ -18,6 +18,7 @@ class Quad(Geometry):
 
     def create_segmented(self, size, segments, smooth):
 
+
         vert_dictionary = {}
 
         # helper function to calculate the normals
@@ -27,7 +28,20 @@ class Quad(Geometry):
         def get_random(z, x):
             # return random.uniform(-random_range, random_range)
             # return 0.1 * np.random.randn()
-            return math.sin(z) * math.sin(x)
+            # return math.sin(z) * math.sin(x)
+            scale = 60
+            octaves = 6
+            lacunarity = 6 #level of detail for each octave
+            persistence = 10 #adjusts amplitude
+
+            # if (z > (0 - (size/4)) and z < (0 + (size/4))):
+            #     octaves = 1
+            #     scale = 10
+
+
+            val = noise.pnoise2(z/scale, x/scale, octaves=octaves, persistence=persistence, lacunarity=lacunarity, repeatx=size*2, repeaty=size*2, base=0)
+            # return -abs(val * 15)
+            return val * 5
             # return 0
             # return 4 - (x * x) - (z * z)
 

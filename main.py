@@ -11,6 +11,7 @@ from material.Material import Material
 from geometry.Cube import *
 from geometry.Mesh import *
 from geometry.Quad import *
+from geometry.Sphere import *
 from shader.Shader import *
 from camera.ThirdPersonCamera import *
 from scene.Manager import *
@@ -116,11 +117,11 @@ if __name__ == '__main__':
     # sm.input.handle_right_click_press = lambda: print("Here!")
     sm.input.handle_mouse_zoom_in = lambda: sm.get_active_camera().move_toward(sm.delta_time)
     sm.input.handle_mouse_zoom_out = lambda: sm.get_active_camera().move_backward(sm.delta_time)
-    sm.set_background_color(glm.vec4(0.0, 0.0, 0.2, 1.0))
+    sm.set_background_color(glm.vec4(0.0, 0.0, 0.0, 1.0))
 
     my_light = Pointlight("light1")
-    my_light.set_position(glm.vec3(0.0, 5.0, 0.0))
-    my_light.set_strength(1)
+    my_light.set_position(glm.vec3(0.0, 55.0, 0.0))
+    my_light.set_strength(6)
     sm.add_point_light(my_light)
 
     # my_light = Pointlight("light2")
@@ -174,14 +175,22 @@ if __name__ == '__main__':
     # my_cube3.setup()
     # sm.add_object(my_cube3)
 
-    my_plane = Quad("testPlane", 40, 40, False, material=Material(
-        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=50, specular=glm.vec3(0.1, 0.1, 0.1)))
+    my_sphere = Sphere("testSphere", 50, 50, 5, material=Material(nVal=200))
+    my_sphere.shader.load_frag_source(file_name="basicShader.frag.glsl")
+    my_sphere.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    my_sphere.shader.init()
+    my_sphere.setup()
+    # my_sphere.scale(glm.vec3(50, 1, 50))
+    sm.add_object(my_sphere)
+
+    my_plane = Quad("testPlane", 12, 12, True, material=Material(
+        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=200, specular=glm.vec3(0.1, 0.1, 0.1), diffuse=glm.vec3(0.3, 0.3, 0.3)))
     my_plane.shader.load_frag_source(file_name="basicShader.frag.glsl")
     my_plane.shader.load_vert_source(file_name="basicShader.vert.glsl")
-    my_plane.set_diffuse_texture(filename="default.jpg")
     my_plane.shader.init()
     my_plane.setup()
-    my_plane.scale(glm.vec3(1, 5, 1))
+    # my_plane.scale(glm.vec3(1, 1, 1))
+    my_plane.translate(glm.vec3(0, -10, 0))
     sm.add_object(my_plane)
 
     camera = ThirdPersonCamera("mainCam", position=glm.vec3(-5, 10.0, 5),

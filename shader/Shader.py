@@ -1,3 +1,4 @@
+import logging
 import sys
 from OpenGL import GL as gl
 
@@ -60,7 +61,7 @@ class Shader:
             self.program_id, gl.GL_INFO_LOG_LENGTH)
         if info_log_len:
             logmsg = gl.glGetProgramInfoLog(self.program_id)
-            log.error(logmsg)
+            logging.error(logmsg)
             sys.exit(11)
 
     def bind(self):
