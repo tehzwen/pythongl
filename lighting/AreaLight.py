@@ -1,17 +1,9 @@
-from enum import Enum
 from lighting.Light import *
 
-
-class LightType(Enum):
-    normal = 1
-    square = 2
-    circular = 3
-
-
-class Pointlight(Light):
-    def __init__(self, name, linear=None, quadratic=None, strength=None, position=None):
+class CircularAreaLight(Light):
+    def __init__(self, name, radius=1.0, linear=None, quadratic=None, strength=None, position=None):
         super().__init__(name)
-        self._name = name
+        self._radius = radius
         self._linear = linear if linear else 0.1
         self._quadratic = quadratic if quadratic else 0.001
         self._strength = strength if strength else 1.0
@@ -28,3 +20,9 @@ class Pointlight(Light):
 
     def set_quadratic(self, val):
         self._quadratic = val
+
+    def get_radius(self):
+        return self._radius
+
+    def set_radius(self, val):
+        self._radius = val

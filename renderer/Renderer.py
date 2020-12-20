@@ -1,6 +1,8 @@
+from lighting.AreaLight import CircularAreaLight
 import glm
 import ctypes
 from OpenGL import GL as gl
+from lighting.Light import *
 
 
 class Renderer():
@@ -28,17 +30,28 @@ class Renderer():
     def set_view_matrix(self, mat):
         self._view_matrix = mat
 
+    def render_line(self, line, sm):
+        line.shader.bind()
+        line.bind()
+        line.link_material()
+        line.link_model()
+        self.set_shader(line.shader)
+        self.link_matrices(line.model.get_matrix())
+        gl.glDrawArrays(gl.GL_LINES, 0, 2)
+        line.unbind_vao()
+
     def render_geometry(self, geo, sm):
         # gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)  # enables wireframe
         # gl.glEnable(gl.GL_CULL_FACE)
-        lights = sm.get_point_lights()
         geo.shader.bind()
         geo.bind()
         geo.link_material()
         geo.link_model()
         self.set_shader(geo.shader)
         self.link_matrices(geo.model.get_matrix())
-        self.render_point_lights(lights)
+        self.render_point_lights(sm.get_point_lights())
+        self.render_area_lights(sm.get_area_lights())
+        self.render_directional_lights(sm.get_directional_lights())
         self.link_camera(sm.get_active_camera())
         gl.glDrawElements(gl.GL_TRIANGLES, len(
             geo.get_indices()), gl.GL_UNSIGNED_INT, ctypes.c_void_p(0))
@@ -46,6 +59,7 @@ class Renderer():
 
     def render_mesh(self, mesh, sm):
         lights = sm.get_point_lights()
+        area_lights = sm.get_area_lights()
         for child in mesh.get_children():
             self.set_shader(child.shader)
             child.shader.bind()
@@ -54,6 +68,8 @@ class Renderer():
             child.link_model()
             self.link_matrices(child.model.get_matrix())
             self.render_point_lights(lights)
+            self.render_area_lights(area_lights)
+            self.render_directional_lights(sm.get_directional_lights())
             self.link_camera(sm.get_active_camera())
             gl.glDrawElements(gl.GL_TRIANGLES, len(
                 child.get_indices()), gl.GL_UNSIGNED_INT, ctypes.c_void_p(0))
@@ -70,6 +86,42 @@ class Renderer():
     def link_camera(self, camera):
         self._shader.link_vec3(
             "cameraPosition", camera.get_position().to_list(), 1)
+
+    def render_area_lights(self, lights):
+        count = 0
+        for key, light in sorted(lights.items()):
+            # check what type of area light we're dealing with here
+            if (isinstance(light, CircularAreaLight)):
+                self._shader.link_vec3(
+                    "circularAreaLights[" + str(count) + "].position", light.get_position().to_list(), 1)
+                self._shader.link_vec3(
+                    "circularAreaLights[" + str(count) + "].color", light.get_color().to_list(), 1)
+                self._shader.link_float(
+                    "circularAreaLights[" + str(count) + "].strength", light.get_strength())
+                self._shader.link_float(
+                    "circularAreaLights[" + str(count) + "].linear", light.get_linear())
+                self._shader.link_float(
+                    "circularAreaLights[" + str(count) + "].quadratic", light.get_quadratic())
+                self._shader.link_float(
+                    "circularAreaLights[" + str(count) + "].radius", light.get_radius())
+                count += 1
+
+        self._shader.link_int("numAreaLights", count)
+
+    def render_directional_lights(self, lights):
+        count = 0
+        for key, light in sorted(lights.items()):
+            self._shader.link_vec3(
+                "dirLights[" + str(count) + "].position", light.get_position().to_list(), 1)
+            self._shader.link_vec3(
+                "dirLights[" + str(count) + "].color", light.get_color().to_list(), 1)
+            self._shader.link_vec3(
+                "dirLights[" + str(count) + "].direction", light.get_direction().to_list(), 1)
+            self._shader.link_float(
+                "dirLights[" + str(count) + "].strength", light.get_strength())
+            count += 1
+
+        self._shader.link_int("numDirectionalLights", count)
 
     def render_point_lights(self, lights):
         count = 0

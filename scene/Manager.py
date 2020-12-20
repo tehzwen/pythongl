@@ -7,17 +7,22 @@ from scene.Input import *
 class Manager():
     def __init__(self):
         self._objects = {}
+        self._lines = {}
         self._point_lights = {}
+        self._area_lights = {}
+        self._directional_lights = {}
         self._cameras = {}
         self._active_camera = None
         self._background_color = glm.vec4(0.0, 0.0, 0.0, 1.0)
         self.debug_window = None
         self.input = Input()
         self.delta_time = None
+        self.changed = False
         self.dimensions = {
             "width": 0,
             "height": 0
         }
+        self.axis = None
 
     def get_background_color(self):
         return self._background_color
@@ -31,6 +36,22 @@ class Manager():
 
     def get_dimensions(self):
         return (self.dimensions["width"], self.dimensions["height"])
+
+    def add_line(self, line):
+        if (line.get_name() not in self._lines):
+            self._lines[line.get_name()] = line
+        else:
+            raise Exception(
+                "Line with this name already exists in the scene, names must be unique")
+
+    def get_lines(self):
+        return self._lines
+
+    def get_line(self, name):
+        if (name in self._lines):
+            return self._lines[name]
+        else:
+            raise Exception("No line with this name")
 
     def add_object(self, object):
         if (object.get_name() not in self._objects):
@@ -63,6 +84,38 @@ class Manager():
             return self._point_lights[name]
         else:
             raise Exception("No Pointlight with this name")
+
+    def add_area_light(self, light):
+        if (light.get_name() not in self._area_lights):
+            self._area_lights[light.get_name()] = light
+        else:
+            raise Exception(
+                "Pointlight with this name already exists in the scene, names must be unique")
+
+    def get_area_lights(self):
+        return self._area_lights
+
+    def get_area_light(self, name):
+        if (name in self._area_lights):
+            return self._area_lights[name]
+        else:
+            raise Exception("No Pointlight with this name")
+
+    def add_directional_light(self, light):
+        if (light.get_name() not in self._directional_lights):
+            self._directional_lights[light.get_name()] = light
+        else:
+            raise Exception(
+                "DirectionalLight with this name already exists in the scene, names must be unique")
+
+    def get_directional_lights(self):
+        return self._directional_lights
+
+    def get_directional_light(self, name):
+        if (name in self._directional_lights):
+            return self._directional_lights[name]
+        else:
+            raise Exception("No DirectionalLight with this name")
 
     def add_camera(self, cam):
         if (cam.get_name() not in self._cameras):
@@ -114,6 +167,8 @@ class Manager():
     def update(self, delta_time):
         self.delta_time = delta_time
         cam = self.get_active_camera()
+
+        self.axis.set_position(cam.get_center())
 
         # check if camera is looking or moving
         if (cam.state["moving"]):

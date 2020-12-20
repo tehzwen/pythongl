@@ -1,5 +1,11 @@
 import glm
+import noise
 
+def get_pnoise(z, x, scale=10, octaves=1, lacunarity=1000, persistence=1000, added_scale=5, size=100):
+    val = noise.pnoise2(z/scale, x/scale, octaves=octaves, persistence=persistence,
+                        lacunarity=lacunarity, repeatx=size*2, repeaty=size*2, base=0)
+    return val * added_scale
+    # return 5.0
 
 def lerp_to_vec3(source, target, speed, delta_time):
     sourceQuat = glm.quat(

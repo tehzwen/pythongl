@@ -53,13 +53,22 @@ DiffuseTexture: {str(self.diffuseTextureFile)}'''
         gl.glTexParameteri(
             gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
 
+
+        # gl.glTexParameteri(
+        #     gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_BORDER)
+        # gl.glTexParameteri(
+        #     gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_BORDER)
+
+
         gl.glTexParameteri(
             gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
         gl.glTexParameteri(
-            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR)
+            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR_MIPMAP_LINEAR)
 
         gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, image.size[0], image.size[1],
                         0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, imageData)
+        gl.glGenerateMipmap(gl.GL_TEXTURE_2D);
+        
 
         image.close()
         return textureID

@@ -1,49 +1,71 @@
+from PIL.Image import new
 import noise
 import glm
 import math
 import numpy as np
+from mymath.Utilities import *
 from geometry.Geometry import *
 from model.Model import *
 from material.Material import *
 
 
 class Quad(Geometry):
-    def __init__(self, name, size, segments, smooth=False, material=None, model=None):
-        super().__init__()
+    def __init__(self, name, size, segments, smooth=False, dynamic=False, material=None, model=None):
+        super().__init__(dynamic=dynamic)
+        self.size = size
         self.create_segmented(size, segments, smooth)
         self._type = "quad"
         self._name = name
         self.material = material if material else Material()
         self.model = model if model else Model()
+        self.draw_mode = gl.GL_DYNAMIC_DRAW if dynamic else gl.GL_STATIC_DRAW
+
+    def alter_heights(self, function):
+        keys_to_delete = []
+        keys_to_add = []
+
+        for key in self.vert_dictionary:
+            temp_vert = key
+            keys_to_delete.append(temp_vert)
+            new_vert = glm.vec3(key[0], function(), key[2])
+            temp_key_value = {"key": new_vert, "values": {"normals": [],
+                                                          "indices": self.vert_dictionary[key]["indices"]}}
+
+            temp_normal = glm.vec3(0, 0, 0)
+            for norm in self.vert_dictionary[key]["normals"]:
+                changed_normal = glm.vec3(
+                    norm[0], norm[1] + new_vert[1], norm[2])
+                temp_key_value["values"]["normals"].append(changed_normal)
+                temp_normal += changed_normal
+            temp_normal = glm.normalize(temp_normal)
+
+            for index in self.vert_dictionary[key]["indices"]:
+                actual_index = index * 3
+                self._vertices[actual_index] = new_vert[0]
+                self._vertices[actual_index + 1] = new_vert[1]
+                self._vertices[actual_index + 2] = new_vert[2]
+
+                self._normals[actual_index] = temp_normal[0]
+                self._normals[actual_index + 1] = temp_normal[1]
+                self._normals[actual_index + 2] = temp_normal[2]
+
+            keys_to_add.append(temp_key_value)
+
+        for key in keys_to_add:
+            self.vert_dictionary[key["key"]] = {
+                "normals": key["values"]["normals"], "indices": key["values"]["indices"]}
+
+        for key in keys_to_delete:
+            del self.vert_dictionary[key]
+
+        self.update_buffers()
 
     def create_segmented(self, size, segments, smooth):
-
-
         vert_dictionary = {}
-
+        
         # helper function to calculate the normals
         def calculate_normal(a, b, c):
             return glm.cross(b-a, c-a)
-
-        def get_random(z, x):
-            # return random.uniform(-random_range, random_range)
-            # return 0.1 * np.random.randn()
-            # return math.sin(z) * math.sin(x)
-            scale = 60
-            octaves = 6
-            lacunarity = 6 #level of detail for each octave
-            persistence = 10 #adjusts amplitude
-
-            # if (z > (0 - (size/4)) and z < (0 + (size/4))):
-            #     octaves = 1
-            #     scale = 10
-
-
-            val = noise.pnoise2(z/scale, x/scale, octaves=octaves, persistence=persistence, lacunarity=lacunarity, repeatx=size*2, repeaty=size*2, base=0)
-            # return -abs(val * 15)
-            return val * 5
-            # return 0
-            # return 4 - (x * x) - (z * z)
 
         def add_vert_to_dict(vertex, normal, index):
             if (vertex in vert_dictionary):
@@ -61,10 +83,11 @@ class Quad(Geometry):
         uvs = []
         current_index = 0
         current_vert = 0
+        current_uv = 0
 
         step = round(size/segments, 3)
-        x = -(size)
         z = -(size)
+        x = -(size)
 
         def add_vert(arr, vert, count):
             try:
@@ -79,15 +102,14 @@ class Quad(Geometry):
 
         grid_num = int((size * 2)/step)
 
-
         numpy_verts = np.zeros((grid_num * grid_num * 18))
         numpy_norms = np.zeros((grid_num * grid_num * 18))
 
         row = 0
-        while(x < size):
+        while(z < size):
             col = 0
 
-            while(z < size):
+            while(x < size):
                 temp_heights = []
                 temp_vertices = np.zeros((18))
 
@@ -95,28 +117,28 @@ class Quad(Geometry):
                     # check for first initial square
                     if (col == 0):
                         for i in range(4):
-                            temp_heights.append(get_random(z, x))
+                            temp_heights.append(get_pnoise(x, z, size=self.size))
                         # 0
-                        zero = glm.vec3(z, temp_heights[0], x)
+                        zero = glm.vec3(x, temp_heights[0], z)
                         current_vert = add_vert(
                             numpy_verts, zero, current_vert)
                         # 1
-                        one = glm.vec3(z + step, temp_heights[1], x)
+                        one = glm.vec3(x + step, temp_heights[1], z)
                         current_vert = add_vert(numpy_verts, one, current_vert)
                         # 2
-                        two = glm.vec3(z, temp_heights[2], x + step)
+                        two = glm.vec3(x, temp_heights[2], z + step)
                         current_vert = add_vert(
                             numpy_verts, two, current_vert)
                         # 3
-                        three = glm.vec3(z, temp_heights[2], x + step)
+                        three = glm.vec3(x, temp_heights[2], z + step)
                         current_vert = add_vert(
                             numpy_verts, three, current_vert)
                         # 4
-                        four = glm.vec3(z + step, temp_heights[1], x)
+                        four = glm.vec3(x + step, temp_heights[1], z)
                         current_vert = add_vert(
                             numpy_verts, four, current_vert)
                         # 5
-                        five = glm.vec3(z + step, temp_heights[3], x + step)
+                        five = glm.vec3(x + step, temp_heights[3], z + step)
                         current_vert = add_vert(
                             numpy_verts, five, current_vert)
 
@@ -141,8 +163,8 @@ class Quad(Geometry):
 
                     # not beginning of row
                     else:
-                        height_2 = get_random(z, x)
-                        height_3 = get_random(z, x)
+                        height_2 = get_pnoise(x, z, size=self.size)
+                        height_3 = get_pnoise(x, z, size=self.size)
 
                         temp_heights.append(heights[col - 1][1])
                         temp_heights.append(height_2)
@@ -150,27 +172,27 @@ class Quad(Geometry):
                         temp_heights.append(height_3)
 
                         # 0
-                        zero = glm.vec3(z, heights[col - 1][1], x)
+                        zero = glm.vec3(x, heights[col - 1][1], z)
                         current_vert = add_vert(
                             numpy_verts, zero, current_vert)
                         # 1
-                        one = glm.vec3(z + step, height_2, x)
+                        one = glm.vec3(x + step, height_2, z)
                         current_vert = add_vert(
                             numpy_verts, one, current_vert)
                         # 2
-                        two = glm.vec3(z, heights[col - 1][3], x + step)
+                        two = glm.vec3(x, heights[col - 1][3], z + step)
                         current_vert = add_vert(
                             numpy_verts, two, current_vert)
                         # 3
-                        three = glm.vec3(z, heights[col - 1][3], x + step)
+                        three = glm.vec3(x, heights[col - 1][3], z + step)
                         current_vert = add_vert(
                             numpy_verts, three, current_vert)
                         # 4
-                        four = glm.vec3(z + step, height_2, x)
+                        four = glm.vec3(x + step, height_2, z)
                         current_vert = add_vert(
                             numpy_verts, four, current_vert)
                         # 5
-                        five = glm.vec3(z + step, height_3, x + step)
+                        five = glm.vec3(x + step, height_3, z + step)
                         current_vert = add_vert(
                             numpy_verts, five, current_vert)
 
@@ -196,8 +218,8 @@ class Quad(Geometry):
                 else:
                     # check for first col
                     if (col == 0):
-                        height_2 = get_random(z, x)
-                        height_3 = get_random(z, x)
+                        height_2 = get_pnoise(x, z, size=self.size)
+                        height_3 = get_pnoise(x, z, size=self.size)
 
                         temp_heights.append(
                             heights[(row * grid_num) - grid_num][2])
@@ -208,29 +230,29 @@ class Quad(Geometry):
 
                         # 0
                         zero = glm.vec3(
-                            z, heights[(row * grid_num) - grid_num][2], x)
+                            x, heights[(row * grid_num) - grid_num][2], z)
                         current_vert = add_vert(
                             numpy_verts, zero, current_vert)
                         # 1
                         one = glm.vec3(
-                            z + step, heights[(row * grid_num) - grid_num][3], x)
+                            x + step, heights[(row * grid_num) - grid_num][3], z)
                         current_vert = add_vert(
                             numpy_verts, one, current_vert)
                         # 2
-                        two = glm.vec3(z, height_2, x + step)
+                        two = glm.vec3(x, height_2, z + step)
                         current_vert = add_vert(
                             numpy_verts, two, current_vert)
                         # 3
-                        three = glm.vec3(z, height_2, x + step)
+                        three = glm.vec3(x, height_2, z + step)
                         current_vert = add_vert(
                             numpy_verts, three, current_vert)
                         # 4
                         four = glm.vec3(
-                            z + step, heights[(row * grid_num) - grid_num][3], x)
+                            x + step, heights[(row * grid_num) - grid_num][3], z)
                         current_vert = add_vert(
                             numpy_verts, four, current_vert)
                         # 5
-                        five = glm.vec3(z + step, height_3, x + step)
+                        five = glm.vec3(x + step, height_3, z + step)
                         current_vert = add_vert(
                             numpy_verts, five, current_vert)
 
@@ -254,7 +276,7 @@ class Quad(Geometry):
                                 five, four, three), 5 + current_index)
 
                     else:
-                        height_3 = get_random(z, x)
+                        height_3 = get_pnoise(x, z, size=self.size)
 
                         temp_heights.append(
                             heights[(row * grid_num) + col - 1][1])
@@ -266,31 +288,31 @@ class Quad(Geometry):
 
                         # 0
                         zero = glm.vec3(
-                            z, heights[(row * grid_num) + col - 1][1], x)
+                            x, heights[(row * grid_num) + col - 1][1], z)
                         current_vert = add_vert(
                             numpy_verts, zero, current_vert)
                         # 1
                         one = glm.vec3(
-                            z + step, heights[((row * grid_num) - grid_num) + col][3], x)
+                            x + step, heights[((row * grid_num) - grid_num) + col][3], z)
                         current_vert = add_vert(
                             numpy_verts, one, current_vert)
                         # 2
                         two = glm.vec3(
-                            z, heights[(row * grid_num) + col - 1][3], x + step)
+                            x, heights[(row * grid_num) + col - 1][3], z + step)
                         current_vert = add_vert(
                             numpy_verts, two, current_vert)
                         # 3
                         three = glm.vec3(
-                            z, heights[(row * grid_num) + col - 1][3], x + step)
+                            x, heights[(row * grid_num) + col - 1][3], z + step)
                         current_vert = add_vert(
                             numpy_verts, three, current_vert)
                         # 4
                         four = glm.vec3(
-                            z + step, heights[((row * grid_num) - grid_num) + col][3], x)
+                            x + step, heights[((row * grid_num) - grid_num) + col][3], z)
                         current_vert = add_vert(
                             numpy_verts, four, current_vert)
                         # 5
-                        five = glm.vec3(z + step, height_3, x + step)
+                        five = glm.vec3(x + step, height_3, z + step)
                         current_vert = add_vert(
                             numpy_verts, five, current_vert)
 
@@ -340,23 +362,32 @@ class Quad(Geometry):
                         normals += normal_calc.to_list()
                         normals += normal_calc.to_list()
                         normals += normal_calc.to_list()
+                # uvs += [
+                #     current_uv, current_uv,
+                #     current_uv + step, current_uv,
+                #     current_uv, current_uv + step,
+                #     current_uv, current_uv + step,
+                #     current_uv + step, current_uv,
+                #     current_uv + step, current_uv + step
+                # ]
                 uvs += [
-                    z, x,
-                    z + step, x,
-                    z, x + step,
-                    z, x + step,
-                    z + step, x,
-                    z + step, x + step
+                    0.0, 0.0,
+                    0.5, 0.0,
+                    0.0, 0.5,
+                    0.0, 0.5,
+                    0.5, 0.0,
+                    0.5, 0.5
                 ]
-                z += step
-                z = round(z, 3)
+                current_uv += step
+                x += step
+                x = round(x, 3)
                 heights.append(temp_heights)
                 col += 1
 
             row += 1
-            z = -(size)
-            x += step
-            x = round(x, 3)
+            x = -(size)
+            z += step
+            z = round(z, 3)
 
         if (smooth):
             for key in vert_dictionary:
@@ -372,6 +403,7 @@ class Quad(Geometry):
                     numpy_norms[actual_index + 1] = temp_normal[1]
                     numpy_norms[actual_index + 2] = temp_normal[2]
 
+        self.vert_dictionary = vert_dictionary
         self._vertices = numpy_verts
         self._normals = normals if not smooth else numpy_norms
         self._texture_coords = uvs

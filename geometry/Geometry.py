@@ -6,7 +6,7 @@ from model.Model import *
 
 
 class Geometry:
-    def __init__(self, material=None, model=None):
+    def __init__(self, dynamic=False, material=None, model=None):
         self._vertices = []
         self._indicies = []
         self._normals = []
@@ -24,6 +24,7 @@ class Geometry:
         self.index_buffer = None
         self.vertex_buffer = None
         self.normal_buffer = None
+        self.draw_mode = gl.GL_DYNAMIC_DRAW if dynamic else gl.GL_STATIC_DRAW
 
     def get_parent(self):
         return self._parent
@@ -110,7 +111,7 @@ class Geometry:
                         len(self.get_vertices()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_vertices()),
-                        gl.GL_STATIC_DRAW)
+                        self.draw_mode)
 
         gl.glEnableVertexAttribArray(self.vertex_attrib)
         gl.glVertexAttribPointer(
@@ -132,7 +133,7 @@ class Geometry:
                         len(self.get_normals()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_normals()),
-                        gl.GL_STATIC_DRAW)
+                        self.draw_mode)
 
         gl.glEnableVertexAttribArray(self.normal_attrib)
         gl.glVertexAttribPointer(
@@ -154,7 +155,7 @@ class Geometry:
                         len(self.get_texture_coords()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_texture_coords()),
-                        gl.GL_STATIC_DRAW)
+                        self.draw_mode)
 
         gl.glEnableVertexAttribArray(self.texture_attrib)
 
@@ -179,10 +180,52 @@ class Geometry:
             len(self.get_indices()) *
             ctypes.sizeof(ctypes.c_uint),
             array_type(*self.get_indices()),
-            gl.GL_STATIC_DRAW
+            self.draw_mode
         )
 
         self.index_buffer = index_buffer
+
+    def update_buffers(self):
+        self.bind_vao()
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertex_buffer)
+        array_type = (gl.GLfloat * len(self.get_vertices()))
+        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+                        len(self.get_vertices()) *
+                        ctypes.sizeof(ctypes.c_float),
+                        array_type(*self.get_vertices()),
+                        self.draw_mode)
+        gl.glEnableVertexAttribArray(self.vertex_attrib)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.normal_buffer)
+        array_type = (gl.GLfloat * len(self.get_normals()))
+        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+                        len(self.get_normals()) *
+                        ctypes.sizeof(ctypes.c_float),
+                        array_type(*self.get_normals()),
+                        self.draw_mode)
+        gl.glEnableVertexAttribArray(self.normal_attrib)
+
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.texture_buffer)
+        array_type = (gl.GLfloat * len(self.get_texture_coords()))
+        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+                        len(self.get_texture_coords()) *
+                        ctypes.sizeof(ctypes.c_float),
+                        array_type(*self.get_texture_coords()),
+                        self.draw_mode)
+
+        gl.glEnableVertexAttribArray(self.texture_attrib)
+
+        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.index_buffer)
+        array_type = (gl.GLuint * len(self.get_indices()))
+        gl.glBufferData(
+            gl.GL_ELEMENT_ARRAY_BUFFER,
+            len(self.get_indices()) *
+            ctypes.sizeof(ctypes.c_uint),
+            array_type(*self.get_indices()),
+            self.draw_mode
+        )
+
+        self.unbind_vao()
 
     def setup(self):
         self.create_vao()

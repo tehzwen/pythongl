@@ -12,8 +12,9 @@ class Model():
         self._position += trans_vector
 
     def rotate(self, rot_vector, angle):
-        self._rotation = glm.rotate(self._rotation, glm.radians(angle), rot_vector)
-    
+        self._rotation = glm.rotate(
+            self._rotation, glm.radians(angle), rot_vector)
+
     def scale(self, scale_vector):
         self._scale *= scale_vector
 
@@ -22,12 +23,15 @@ class Model():
 
     def get_rotation(self):
         return self._rotation
-    
+
     def get_position(self):
         return self._position
 
     def get_matrix(self):
         return self._matrix
-    
+
     def set_matrix(self, mat):
         self._matrix = mat
+
+    def set_position(self, position):
+        self._position = position
