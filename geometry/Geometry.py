@@ -1,4 +1,4 @@
-from OpenGL import GL as gl
+from OpenGL import *
 import ctypes
 from shader.Shader import *
 from material.Material import *
@@ -24,7 +24,7 @@ class Geometry:
         self.index_buffer = None
         self.vertex_buffer = None
         self.normal_buffer = None
-        self.draw_mode = gl.GL_DYNAMIC_DRAW if dynamic else gl.GL_STATIC_DRAW
+        self.draw_mode = GL_DYNAMIC_DRAW if dynamic else GL_STATIC_DRAW
 
     def get_parent(self):
         return self._parent
@@ -54,16 +54,16 @@ class Geometry:
         self._vertices = verts
 
     def create_vao(self):
-        self.vao = gl.glGenVertexArrays(1)
+        self.vao = glGenVertexArrays(1)
 
     def bind(self):
-        gl.glBindVertexArray(self.vao)
+        glBindVertexArray(self.vao)
 
     def bind_vao(self):
-        gl.glBindVertexArray(self.vao)
+        glBindVertexArray(self.vao)
 
     def unbind_vao(self):
-        gl.glBindVertexArray(0)
+        glBindVertexArray(0)
 
     def set_diffuse_texture(self, filename):
         self.material.set_diffuse_texture("./res/materials/" + filename)
@@ -79,11 +79,11 @@ class Geometry:
         self.shader.link_float("material.shininess", self.material.n)
 
         if (self.material.diffuseTexture):
-            gl.glActiveTexture(gl.GL_TEXTURE0 + self.material.diffuseTexture)
+            glActiveTexture(GL_TEXTURE0 + self.material.diffuseTexture)
             self.shader.link_int("diffuseSamplerExists", 1)
             self.shader.link_int(
                 "diffuseSampler", self.material.diffuseTexture)
-            gl.glBindTexture(gl.GL_TEXTURE_2D, self.material.diffuseTexture)
+            glBindTexture(GL_TEXTURE_2D, self.material.diffuseTexture)
 
     def link_model(self):
         model_matrix = glm.mat4()
@@ -93,7 +93,7 @@ class Geometry:
         model_matrix = glm.scale(model_matrix, self.model.get_scale())
         model_matrix = glm.translate(model_matrix, -(self.get_centroid()))
 
-        gl.glUniformMatrix4fv(gl.glGetUniformLocation(
+        glUniformMatrix4fv(glGetUniformLocation(
             self.shader.program_id, "modelMatrix"), 1, False, model_matrix.to_list())
 
         self.model.set_matrix(model_matrix)
@@ -102,22 +102,22 @@ class Geometry:
         self.vertex_attrib = 0  # No particular reason for 0,
         # but must match the layout location in the shader.
 
-        self.vertex_buffer = gl.glGenBuffers(1)
+        self.vertex_buffer = glGenBuffers(1)
 
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertex_buffer)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vertex_buffer)
 
-        array_type = (gl.GLfloat * len(self.get_vertices()))
-        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+        array_type = (GLfloat * len(self.get_vertices()))
+        glBufferData(GL_ARRAY_BUFFER,
                         len(self.get_vertices()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_vertices()),
                         self.draw_mode)
 
-        gl.glEnableVertexAttribArray(self.vertex_attrib)
-        gl.glVertexAttribPointer(
+        glEnableVertexAttribArray(self.vertex_attrib)
+        glVertexAttribPointer(
             self.vertex_attrib,            # attribute 0.
             3,                  # components per vertex attribute
-            gl.GL_FLOAT,        # type
+            GL_FLOAT,        # type
             False,              # to be normalized?
             0,                  # stride
             None                # array buffer offset
@@ -125,21 +125,21 @@ class Geometry:
 
     def create_normal_buffer(self):
         self.normal_attrib = 1
-        self.normal_buffer = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.normal_buffer)
+        self.normal_buffer = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.normal_buffer)
 
-        array_type = (gl.GLfloat * len(self.get_normals()))
-        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+        array_type = (GLfloat * len(self.get_normals()))
+        glBufferData(GL_ARRAY_BUFFER,
                         len(self.get_normals()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_normals()),
                         self.draw_mode)
 
-        gl.glEnableVertexAttribArray(self.normal_attrib)
-        gl.glVertexAttribPointer(
+        glEnableVertexAttribArray(self.normal_attrib)
+        glVertexAttribPointer(
             self.normal_attrib,            # attribute 0.
             3,                  # components per vertex attribute
-            gl.GL_FLOAT,        # type
+            GL_FLOAT,        # type
             False,              # to be normalized?
             0,                  # stride
             None                # array buffer offset
@@ -148,35 +148,35 @@ class Geometry:
     def create_texture_buffer(self):
         self.texture_attrib = 2
 
-        self.texture_buffer = gl.glGenBuffers(1)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.texture_buffer)
-        array_type = (gl.GLfloat * len(self.get_texture_coords()))
-        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+        self.texture_buffer = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.texture_buffer)
+        array_type = (GLfloat * len(self.get_texture_coords()))
+        glBufferData(GL_ARRAY_BUFFER,
                         len(self.get_texture_coords()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_texture_coords()),
                         self.draw_mode)
 
-        gl.glEnableVertexAttribArray(self.texture_attrib)
+        glEnableVertexAttribArray(self.texture_attrib)
 
-        gl.glVertexAttribPointer(
+        glVertexAttribPointer(
             self.texture_attrib,            # attribute 0.
             2,                  # components per vertex attribute
-            gl.GL_FLOAT,        # type
+            GL_FLOAT,        # type
             False,              # to be normalized?
             0,                  # stride
             None                # array buffer offset
         )
 
     def create_index_buffer(self):
-        index_buffer = gl.glGenBuffers(1)
+        index_buffer = glGenBuffers(1)
 
-        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, index_buffer)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer)
 
-        array_type = (gl.GLuint * len(self.get_indices()))
+        array_type = (GLuint * len(self.get_indices()))
 
-        gl.glBufferData(
-            gl.GL_ELEMENT_ARRAY_BUFFER,
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER,
             len(self.get_indices()) *
             ctypes.sizeof(ctypes.c_uint),
             array_type(*self.get_indices()),
@@ -187,44 +187,49 @@ class Geometry:
 
     def update_buffers(self):
         self.bind_vao()
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertex_buffer)
-        array_type = (gl.GLfloat * len(self.get_vertices()))
-        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+        glBindBuffer(GL_ARRAY_BUFFER, self.vertex_buffer)
+        array_type = (GLfloat * len(self.get_vertices()))
+        glBufferData(GL_ARRAY_BUFFER,
                         len(self.get_vertices()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_vertices()),
                         self.draw_mode)
-        gl.glEnableVertexAttribArray(self.vertex_attrib)
+        glEnableVertexAttribArray(self.vertex_attrib)
 
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.normal_buffer)
-        array_type = (gl.GLfloat * len(self.get_normals()))
-        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+        glBindBuffer(GL_ARRAY_BUFFER, self.normal_buffer)
+        array_type = (GLfloat * len(self.get_normals()))
+        glBufferData(GL_ARRAY_BUFFER,
                         len(self.get_normals()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_normals()),
                         self.draw_mode)
-        gl.glEnableVertexAttribArray(self.normal_attrib)
+        glEnableVertexAttribArray(self.normal_attrib)
 
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.texture_buffer)
-        array_type = (gl.GLfloat * len(self.get_texture_coords()))
-        gl.glBufferData(gl.GL_ARRAY_BUFFER,
+        glBindBuffer(GL_ARRAY_BUFFER, self.texture_buffer)
+        array_type = (GLfloat * len(self.get_texture_coords()))
+        glBufferData(GL_ARRAY_BUFFER,
                         len(self.get_texture_coords()) *
                         ctypes.sizeof(ctypes.c_float),
                         array_type(*self.get_texture_coords()),
                         self.draw_mode)
 
-        gl.glEnableVertexAttribArray(self.texture_attrib)
+        glEnableVertexAttribArray(self.texture_attrib)
 
-        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.index_buffer)
-        array_type = (gl.GLuint * len(self.get_indices()))
-        gl.glBufferData(
-            gl.GL_ELEMENT_ARRAY_BUFFER,
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.index_buffer)
+        array_type = (GLuint * len(self.get_indices()))
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER,
             len(self.get_indices()) *
             ctypes.sizeof(ctypes.c_uint),
             array_type(*self.get_indices()),
             self.draw_mode
         )
 
+        self.unbind_vao()
+
+    def render(self):
+        glDrawElements(GL_TRIANGLES, len(
+            self.get_indices()), GL_UNSIGNED_INT, ctypes.c_void_p(0))
         self.unbind_vao()
 
     def setup(self):

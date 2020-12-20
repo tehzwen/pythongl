@@ -1,4 +1,4 @@
-from PIL.Image import new
+from OpenGL.GL import *
 import noise
 import glm
 import math
@@ -8,6 +8,35 @@ from geometry.Geometry import *
 from model.Model import *
 from material.Material import *
 
+
+class RenderQuad(Geometry):
+    def __init__(self, name):
+        super().__init__()
+        self._name = name
+        self._vertices = [
+            -1.0, 1.0, 0.0,
+            -1.0, -1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, -1.0, 0.0,
+        ]
+
+        self._texture_coords = [
+            0.0, 1.0,
+            0.0, 0.0,
+            1.0, 1.0,
+            1.0, 0.0
+        ]
+
+    def setup(self):
+        self.create_vao()
+        self.bind_vao()
+        self.calculate_centroid()
+        self.create_vertex_buffer()
+        self.create_texture_buffer()
+        self.unbind_vao()
+
+    def render(self):
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 
 class Quad(Geometry):
     def __init__(self, name, size, segments, smooth=False, dynamic=False, material=None, model=None):
@@ -62,7 +91,7 @@ class Quad(Geometry):
 
     def create_segmented(self, size, segments, smooth):
         vert_dictionary = {}
-        
+
         # helper function to calculate the normals
         def calculate_normal(a, b, c):
             return glm.cross(b-a, c-a)
@@ -117,7 +146,8 @@ class Quad(Geometry):
                     # check for first initial square
                     if (col == 0):
                         for i in range(4):
-                            temp_heights.append(get_pnoise(x, z, size=self.size))
+                            temp_heights.append(
+                                get_pnoise(x, z, size=self.size))
                         # 0
                         zero = glm.vec3(x, temp_heights[0], z)
                         current_vert = add_vert(

@@ -12,23 +12,23 @@ class Axis():
         shader_name = "flatShader"
 
         self.x_line.shader.load_frag_source(
-            file_name=shader_name + ".frag.glsl")
+            file_name=shader_name)
         self.x_line.shader.load_vert_source(
-            file_name=shader_name + ".vert.glsl")
+            file_name=shader_name)
         self.x_line.shader.init()
         self.x_line.setup()
 
         self.y_line.shader.load_frag_source(
-            file_name=shader_name + ".frag.glsl")
+            file_name=shader_name)
         self.y_line.shader.load_vert_source(
-            file_name=shader_name + ".vert.glsl")
+            file_name=shader_name)
         self.y_line.shader.init()
         self.y_line.setup()
 
         self.z_line.shader.load_frag_source(
-            file_name=shader_name + ".frag.glsl")
+            file_name=shader_name)
         self.z_line.shader.load_vert_source(
-            file_name=shader_name + ".vert.glsl")
+            file_name=shader_name)
         self.z_line.shader.init()
         self.z_line.setup()
 

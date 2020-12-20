@@ -19,7 +19,6 @@ class Sphere(Geometry):
         self.model = model if model else Model()
 
     def generate_flat_norms(self):
-
         def calculate_normal(a, b, c):
             return glm.cross(b-a, c-a)
 
@@ -110,8 +109,4 @@ class Sphere(Geometry):
 
                 k1 += 1
                 k2 += 1
-
-        print(len(self._indicies))
-        print(len(self._vertices))
-
         # self.generate_flat_norms()

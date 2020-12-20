@@ -1,11 +1,7 @@
 import sys
-from OpenGL import GL as gl
+from OpenGL import *
 import glfw
 import glm
-import numpy as np
-import math
-import imgui
-from imgui.integrations.glfw import GlfwRenderer
 from geometry.Triangle import *
 from material.Material import Material
 from geometry.Cube import *
@@ -34,10 +30,11 @@ def main_loop(window):
     width, height = sm.get_dimensions()
     # create projection matrix
     proj_matrix = glm.perspective(glm.radians(90), width/height, 0.1, 10000)
-    gl.glEnable(gl.GL_MULTISAMPLE)
+    glEnable(GL_MULTISAMPLE)
 
     renderer = Renderer()
     renderer.set_projection_matrix(proj_matrix)
+    renderer.setup_hdr_buffer(sm)
 
     previous_time = 0.0
     current_time = 0.0
@@ -46,31 +43,14 @@ def main_loop(window):
         glfw.get_key(window, glfw.KEY_ESCAPE) != glfw.PRESS and
         not glfw.window_should_close(window)
     ):
-        width, height = sm.get_dimensions()
-        gl.glViewport(0, 0, width, height)
-        current_time = glfw.get_time()
-        gl.glEnable(gl.GL_DEPTH_TEST)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-        r, g, b, a = sm.get_background_color()
-        gl.glClearColor(r, g, b, a)
-        camera = sm.get_active_camera()
-        camera.update()
-        renderer.set_view_matrix(camera.view_matrix)
-
         delta = current_time - previous_time
         previous_time = current_time
         sm.update(delta)
+        current_time = glfw.get_time()
+        
+        # renderer.regular_render_scene(sm)
+        renderer.render_scene_to_hdr(sm, exposure=1.0)
 
-        # render any lines
-        for key, line in sm.get_lines().items():
-            renderer.render_line(line, sm)
-
-        # render objects
-        for key, object in sm.get_objects().items():
-            if (isinstance(object, Geometry)):
-                renderer.render_geometry(object, sm)
-            else:
-                renderer.render_mesh(object, sm)
         glfw.swap_buffers(window)
         glfw.poll_events()
 
@@ -152,43 +132,21 @@ if __name__ == '__main__':
     # my_cube2.setup()
     # sm.add_object(my_cube2)
 
-    # my_sphere = Sphere("testSphere", 50, 50, 5, material=Material(nVal=200))
-    # my_sphere.shader.load_frag_source(file_name="basicShader.frag.glsl")
-    # my_sphere.shader.load_vert_source(file_name="basicShader.vert.glsl")
-    # my_sphere.shader.init()
-    # my_sphere.setup()
-    # # my_sphere.scale(glm.vec3(50, 1, 50))
-    # sm.add_object(my_sphere)
+    my_light = Pointlight("light1", strength=15.0,
+                          position=glm.vec3(30.0, 35.0, 0.0), color=glm.vec3(0.5, 0.0, 0.0))
+    sm.add_point_light(my_light)
 
-    # my_light = Pointlight("light1", strength=15.0,
-    #                       position=glm.vec3(30.0, 35.0, 0.0))
-    # sm.add_point_light(my_light)
-
-    my_dir_light = DirectionalLight("dirLight1", direction=glm.vec3(-1,-0.25,0), position=glm.vec3(200, 150, 0), strength=5)
+    my_dir_light = DirectionalLight("dirLight1", direction=glm.vec3(-1,-0.25,0), position=glm.vec3(200, 150, 0), strength=2)
     sm.add_directional_light(my_dir_light)
-    my_sphere = Sphere("lightSphere", 50, 50, 10, material=Material(nVal=200), model=Model(position=glm.vec3(200, 150, 0)))
-    my_sphere.shader.load_frag_source(file_name="basicShader.frag.glsl")
-    my_sphere.shader.load_vert_source(file_name="basicShader.vert.glsl")
+    my_sphere = Sphere("lightSphere", 10, 10, 10, material=Material(nVal=200), model=Model(position=glm.vec3(200, 150, 0)))
+    my_sphere.shader.load_frag_source(file_name="lightObject")
+    my_sphere.shader.load_vert_source(file_name="lightObject")
     my_sphere.shader.init()
     my_sphere.setup()
     # my_sphere.scale(glm.vec3(50, 1, 50))
     sm.add_object(my_sphere)
 
-    # circular_light = CircularAreaLight(
-    #     "circular-test-light", radius=10, position=glm.vec3(0.0, 2.0, 0.0), strength=15)
-    # sm.add_area_light(circular_light)
 
-    # square_light = SquarePointlight(
-    #     "squareLightTest", segments=10, strength=5, position=glm.vec3(-50.0, 10.0, 0.0))
-    # sm.add_point_light(square_light)
-
-    # my_line = Line("zLine", glm.vec3(0.0, 0.0, 2.0), glm.vec3(
-    #     0.0, 0.0, -2.0), material=Material(diffuse=glm.vec3(0.0, 1.0, 0.0)))
-    # my_line.shader.load_frag_source(file_name="flatShader.frag.glsl")
-    # my_line.shader.load_vert_source(file_name="flatShader.vert.glsl")
-    # my_line.shader.init()
-    # my_line.setup()
-    # sm.add_line(my_line)
     scene_axis = Axis()
     for line in scene_axis.get_lines():
         sm.add_line(line)
@@ -196,9 +154,9 @@ if __name__ == '__main__':
     sm.axis = scene_axis
 
     my_plane = Quad("testPlane", 100, 50, smooth=True, dynamic=False, material=Material(
-        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=1000, specular=glm.vec3(0.1, 0.1, 0.1), diffuse=glm.vec3(0.3, 0.3, 0.3)))
-    my_plane.shader.load_frag_source(file_name="basicShader.frag.glsl")
-    my_plane.shader.load_vert_source(file_name="basicShader.vert.glsl")
+        ambient=glm.vec3(0.5, 0.5, 0.5), nVal=math.inf, specular=glm.vec3(0.1, 0.1, 0.1), diffuse=glm.vec3(0.3, 0.3, 0.3)))
+    my_plane.shader.load_frag_source(file_name="basicShader")
+    my_plane.shader.load_vert_source(file_name="basicShader")
     my_plane.shader.init()
     my_plane.setup()
     my_plane.set_diffuse_texture(filename="grass.jpg")

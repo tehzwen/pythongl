@@ -13,7 +13,7 @@ class Shader:
         if (source):
             self._fragSource = source
         elif (file_name):
-            f = open("./shader/" + file_name, 'r')
+            f = open("./shader/" + file_name + ".frag.glsl", 'r')
             self._fragSource = f.read()
             f.close()
         else:
@@ -23,7 +23,7 @@ class Shader:
         if (source):
             self._vertSource = source
         elif (file_name):
-            f = open("./shader/" + file_name, 'r')
+            f = open("./shader/" + file_name + ".vert.glsl", 'r')
             self._vertSource = f.read()
             f.close()
         else:
@@ -68,10 +68,12 @@ class Shader:
         gl.glUseProgram(self.program_id)
 
     def link_mat4(self, name, matrix):
-        gl.glUniformMatrix4fv(gl.glGetUniformLocation(self.program_id, name), 1, False, matrix)
+        gl.glUniformMatrix4fv(gl.glGetUniformLocation(
+            self.program_id, name), 1, False, matrix)
 
     def link_vec3(self, name, vec, count):
-        gl.glUniform3fv(gl.glGetUniformLocation(self.program_id, name), count, vec)
+        gl.glUniform3fv(gl.glGetUniformLocation(
+            self.program_id, name), count, vec)
 
     def link_float(self, name, val):
         gl.glUniform1f(gl.glGetUniformLocation(self.program_id, name), val)

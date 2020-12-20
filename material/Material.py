@@ -1,7 +1,7 @@
 import glm
 import numpy
 from PIL import Image
-from OpenGL import GL as gl
+from OpenGL.GL import *
 
 
 class Material():
@@ -41,33 +41,33 @@ DiffuseTexture: {str(self.diffuseTextureFile)}'''
         image = image.convert('RGBA')
 
         imageData = numpy.array(image.getdata(), numpy.uint8)
-        textureID = gl.glGenTextures(1)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, textureID)
+        textureID = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, textureID)
 
-        # gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
-        # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_R, gl.GL_CLAMP)
-        # gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP)
+        # glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP)
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
 
-        gl.glTexParameteri(
-            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
-        gl.glTexParameteri(
-            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
-
-
-        # gl.glTexParameteri(
-        #     gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_BORDER)
-        # gl.glTexParameteri(
-        #     gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_BORDER)
+        glTexParameteri(
+            GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glTexParameteri(
+            GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
 
 
-        gl.glTexParameteri(
-            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
-        gl.glTexParameteri(
-            gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR_MIPMAP_LINEAR)
+        # glTexParameteri(
+        #     GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
+        # glTexParameteri(
+        #     GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
 
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, image.size[0], image.size[1],
-                        0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, imageData)
-        gl.glGenerateMipmap(gl.GL_TEXTURE_2D);
+
+        glTexParameteri(
+            GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameteri(
+            GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.size[0], image.size[1],
+                        0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
+        glGenerateMipmap(GL_TEXTURE_2D);
         
 
         image.close()
