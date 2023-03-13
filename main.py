@@ -76,8 +76,8 @@ def create_main_window():
     if not glfw.init():
         sys.exit(1)
 
-    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
-    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 4)
+    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
+    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
     glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, True)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
     glfw.window_hint(glfw.SAMPLES, 4)
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     my_plane.shader.load_vert_source(file_name="basicShader")
     my_plane.shader.init()
     my_plane.setup()
-    my_plane.set_diffuse_texture(filename="grass.jpg")
+    my_plane.set_diffuse_texture(filename="kekw.jpg")
     # my_plane.scale(glm.vec3(1, 1, 1))
     my_plane.translate(glm.vec3(0, -10, 0))
     sm.add_object(my_plane)

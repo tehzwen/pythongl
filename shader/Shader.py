@@ -7,6 +7,8 @@ class Shader:
     def __init__(self):
         self._fragSource = ""
         self._vertSource = ""
+        self._frag_file = ""
+        self._vert_file = ""
         self.program_id = None
 
     def load_frag_source(self, file_name=None, source=None):
@@ -14,6 +16,7 @@ class Shader:
             self._fragSource = source
         elif (file_name):
             f = open("./shader/" + file_name + ".frag.glsl", 'r')
+            self._frag_file = "./shader/" + file_name + ".frag.glsl"
             self._fragSource = f.read()
             f.close()
         else:
@@ -24,6 +27,7 @@ class Shader:
             self._vertSource = source
         elif (file_name):
             f = open("./shader/" + file_name + ".vert.glsl", 'r')
+            self._vert_file = "./shader/" + file_name + ".frag.glsl"
             self._vertSource = f.read()
             f.close()
         else:
@@ -39,7 +43,6 @@ class Shader:
         for shader_type, shader_src in shaders.items():
             shader_id = gl.glCreateShader(shader_type)
             gl.glShaderSource(shader_id, shader_src)
-
             gl.glCompileShader(shader_id)
 
             # check if compilation was successful
@@ -61,6 +64,8 @@ class Shader:
             self.program_id, gl.GL_INFO_LOG_LENGTH)
         if info_log_len:
             logmsg = gl.glGetProgramInfoLog(self.program_id)
+            print(
+                f"Error compiling shader for {self._frag_file} and {self._vert_file}.")
             logging.error(logmsg)
             sys.exit(11)
 

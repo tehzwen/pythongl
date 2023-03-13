@@ -1,11 +1,11 @@
-# version 430 core
+#version 330 core
 #define MAX_POINT_LIGHTS 20
 #define MAX_AREA_LIGHTS 20
 #define MAX_DIR_LIGHTS 5
 
 out vec4 fragColor;
 
-in vec3 oNormal;
+// in vec3 oNormal;
 in vec3 oFragPosition;
 in vec3 normalInterp;
 in vec2 oUV;

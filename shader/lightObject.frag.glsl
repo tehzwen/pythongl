@@ -1,4 +1,4 @@
-# version 430 core
+#version 330 core
 
 out vec4 fragColor;
 
@@ -6,7 +6,6 @@ in vec3 oNormal;
 in vec3 oFragPosition;
 in vec3 normalInterp;
 in vec2 oUV;
-in vec3 oCameraPosition;
 
 struct Material {
     vec3 ambient;

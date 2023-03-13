@@ -1,0 +1,6 @@
+PyOpenGL~=3.1.6
+glfw~=2.5.6
+PyGLM~=2.7.0
+Pillow~=9.4.0
+pyassimp~=4.1.4
+noise~=1.2.2
